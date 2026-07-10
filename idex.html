@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleek Prompt Workspace</title>
+    <style>
+        :root {
+            --bg-base: #09090b;
+            --bg-surface: #18181b;
+            --bg-surface-hover: #27272a;
+            --border: #27272a;
+            --border-focus: #3f3f46;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styling */
+        aside {
+            width: 280px;
+            background-color: var(--bg-base);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            flex-shrink: 0;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .logo-area h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .nav-header {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin: 12px 0 6px 4px;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-muted);
+            transition: background-color 0.15s, color 0.15s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: var(--bg-surface);
+            color: var(--text-main);
+        }
+
+        .nav-counter {
+            font-size: 11px;
+            background-color: var(--border);
+            padding: 2px 6px;
+            border-radius: 10px;
+            color: var(--text-muted);
+        }
+
+        .btn-add-prompt {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background-color 0.15s;
+            margin-top: 16px;
+        }
+
+        .btn-add-prompt:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Main Workspace Panel */
+        main {
+            flex-grow: 1;
+            padding: 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+
+        .main-header h2 {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .prompt-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        /* Prompt Card Design */
+        .prompt-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .card-category {
+            font-size: 11px;
+            background-color: var(--border);
+            color: var(--text-muted);
+            padding: 2px 8px;
+            border-radius: 4px;
+            width: fit-content;
+            font-weight: 500;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-description {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--border-focus);
+            color: var(--text-main);
+        }
+
+        .btn-copy {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-copy:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-copy.copied {
+            background-color: var(--success);
+        }
+
+        /* Dynamic Field Styling */
+        .variables-section {
+            background-color: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .variable-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .variable-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .variable-input {
+            width: 100%;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            font-family: var(--font-sans);
+            resize: vertical;
+        }
+
+        .variable-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Code/Prompt Preview Drawer */
+        .preview-drawer {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .preview-header {
+            background-color: var(--bg-base);
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .preview-body {
+            background-color: #0e0e11;
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .preview-body.open {
+            display: block;
+        }
+
+        /* Editor Modal Overlay */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 28px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-input {
+            background-color: var(--bg-base);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+        }
+
+        .form-textarea {
+            height: 250px;
+            font-family: var(--font-mono);
+            resize: vertical;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-secondary {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--border-focus);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar navigation and search -->
+    <aside>
+        <div class="logo-area">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-zap" style="color: var(--primary);"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline></svg>
+            <h1>PROMPT Workspace</h1>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search prompts..." oninput="renderPrompts()">
+        </div>
+
+        <nav class="sidebar-nav">
+            <span class="nav-header">CATEGORIES</span>
+            <div class="nav-item active" onclick="selectCategory('All')" id="cat-all">
+                <span>All Prompts</span>
+                <span class="nav-counter" id="count-all">0</span>
+            </div>
+            <div id="dynamicCategories"></div>
+        </nav>
+
+        <button class="btn-add-prompt" onclick="openModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add New Prompt
+        </button>
+    </aside>
+
+    <!-- Main Workspace Area -->
+    <main>
+        <div class="main-header">
+            <h2 id="currentCategoryTitle">All Prompts</h2>
+        </div>
+
+        <div class="prompt-grid" id="promptGrid"></div>
+    </main>
+
+    <!-- Add/Edit Modal (Embedded) -->
+    <div class="modal" id="promptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create New Prompt</h3>
+                <button class="btn-icon" onclick="closeModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-form">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="formTitle">Title</label>
+                    <input type="text" id="formTitle" class="form-input" placeholder="e.g., Code Review Standard">
+                </div>
+                <div class="form-group">
+                    <label for="formCategory">Category</label>
+                    <input type="text" id="formCategory" class="form-input" placeholder="e.g., Development, Utility, Custom">
+                </div>
+                <div class="form-group">
+                    <label for="formDesc">Short Description</label>
+                    <input type="text" id="formDesc" class="form-input" placeholder="Briefly describe what this prompt does">
+                </div>
+                <div class="form-group">
+                    <label for="formText">Prompt Content <span style="font-weight: normal; color: var(--text-muted);">(Use double-curly-braces for variables, e.g., {{Variable Name}})</span></label>
+                    <textarea id="formText" class="form-input form-textarea" placeholder="Paste your prompt template here..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button class="btn-copy" onclick="savePrompt()">Save Prompt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Initial Seed Data to populate workspace on first open
+    const defaultPrompts = [
+        {
+            id: 'export-state',
+            title: '1. Export Session State',
+            category: 'Session Management',
+            description: 'Compiles current session history and metadata for transfer.',
+            text: `Act as a high-fidelity state-serialization compiler. I need to transfer the entirety of our current session's state, rules, background history, logic, schemas, and active backlog to a fresh Gemini instance.
+Utilize your maximum output token capacity to ensure absolute completeness. Stop as soon as everything is captured with high fidelity. Do not pad with restated or low-value filler material just because there is room left in your budget.
+Rules:
+1. DENSE TECHNICAL STYLE: Do not use cryptic, overly abbreviated shorthand. Use clear, dense, highly descriptive, structurally complete prose. Keep logical connectors ("because of", "caused by", "linked via", "designed to prevent") fully intact so relationships between variables, concepts, and rules stay precise.
+2. IMPLEMENTATION STATUS FLAGGING: Explicitly tag every database column, calculated formula, and logical rule in Class 2 with either [ACTIVE/IMPLEMENTED] or [PROPOSED/UNDER TEST], so the receiving instance never assumes a discussed feature is already built.
+3. TABULAR DATA MATRIX: Format all data dictionaries, schemas, SME mapping matrices, and key-value tables as standard Markdown tables. No conversational bullet lists or arrow notation for tabular data.
+4. THREE-CLASS VALUE PRIORITIZATION (by structural value, not chronology):
+- CLASS 1 (Top priority): Active working state — last 5 turns, active dilemmas, immediate next steps. 100% lossless.
+- CLASS 2 (High priority): Critical logical state — rules, definitions, formulas, code, schemas, guidelines, alternatives under active evaluation. 100% lossless regardless of how old.
+- CLASS 3 (Medium priority): Background/logistical context — timelines, personal background, resolved milestones, admin info. May be condensed, but retain key details.
+5. SYMMETRIC WEIGHTING: Give my personal background, sequence of past attempts, and explanations equal prominence to technical data and solutions.
+6. FILTER UNCOMMITTED LOGISTICS ONLY: Only drop unconfirmed physical/logistical actions (purchases, tasks I explicitly rejected or postponed). Preserve all theoretical ideas, design options, and alternative logic currently under discussion.
+7. OCR & VISUAL PRESERVATION: Transcribe and preserve all data, text, tables, diagrams, and logic that came from uploaded screenshots or images.
+8. VERBATIM PRESERVATION: Keep formulas, complete code blocks, and specific variables 100% verbatim inside <verbatim_data>...</verbatim_data> tags. Do not nest markdown backticks inside these tags — raw plain text only, to prevent syntax corruption.
+9. PRESERVE FRONTEND DESIGN & DAX METRICS: Document any frontend visual layouts, active slicer configurations, report-level filters, and DAX measures currently implemented.
+10. TRACK UNVERIFIED ASSUMPTIONS & PLACEHOLDERS: Clearly document any temporary placeholder values, assumptions, or dummy coefficients currently used for debugging/testing.
+11. NO INVENTION: Do not infer or invent any schema field, formula, variable, or specific value not actually discussed. If you're genuinely filling a small gap, mark it [INFERRED] rather than stating it as established fact.
+12. SYNTAX SAFETY: Never split an open/close <verbatim_data> tag or code block across modules. If a block doesn't fit at the end of a response, push the entire block to the next one.
+13. PRESERVE WARNINGS, BOUNDARIES, & WORKAROUNDS: Always preserve specific warnings, boundary conditions, constraints, risks, and custom workarounds exactly — these are parameters, not conversational fluff.
+14. REPORT YOUR OWN GAPS: Close with a "Confidence & Gaps" section — anything you're not fully sure you captured, anything ambiguous, anything compressed hard due to length.
+15. CHUNKING CONTROL: If more than one response is genuinely needed, stop at a logical transition point and write exactly "[TO BE CONTINUED IN MODULE 2]" — no conversational intro or outro. Otherwise, complete the export in a single response.
+Structure the output as follows:
+# SESSION STATE EXPORT
+## 0. SESSION METADATA & CURRENT STATE SNAPSHOT
+[Active date, current year, primary subject, active model version — plus 3-5 lines: what this project is, what's actively being worked on, what's next]
+## 1. CLASS 3: GENERAL BACKGROUND, USER PROFILE & CHRONOLOGICAL HISTORICAL MILESTONES
+## 2. CLASS 2: LOSSLESS DESCRIPTIVE DICTIONARY & SCHEMA CANDIDATES (tables: implemented vs. proposed)
+## 3. CLASS 2: SME DESIGN DEBATES & EXPERIMENTAL LOGIC (tables: tentative rules, columns under trial, caveats)
+## 4. CLASS 2: VERBATIM ETL STATE, DAX MEASURES, & MATHEMATICAL FORMULAS (Ensure all are wrapped in <verbatim_data> tags)
+## 5. CLASS 2: ACTIVE TESTING ASSUMPTIONS & PLACEHOLDERS
+## 6. CLASS 2: DASHBOARD FRONTEND & VISUAL LAYOUT SPECIFICATIONS
+## 7. CLASS 1: LOSSLESS ACTIVE WORKING MEMORY (last 3-5 turns, current dilemmas, active context)
+## 8. CONFIDENCE & GAPS
+## 9. CLASS 1: IMMEDIATE ROADMAP & UNRESOLVED QUEUE (confirmed next steps only)`
+        },
+        {
+            id: 'continue-module',
+            title: '2. Continue with Module 2',
+            category: 'Session Management',
+            description: 'Asks Gemini to output the next module block without conversational fillers.',
+            text: 'Continue with Module 2. Start directly with the text. Do not write any conversational intro.'
+        },
+        {
+            id: 'resume-session',
+            title: '3. Resume Session in New Instance',
+            category: 'Session Management',
+            description: 'Injects your generated state block and configures the new session environment.',
+            text: `Resume session from this compressed state:
+{{State Block}}
+
+Acknowledge this state. In your very first reply:
+1. Write exactly one sentence stating the CURRENT active topic of discussion.
+2. Conduct a brief "Sanity Check": flag any conflicting database variables, incomplete logic models, or immediate dependencies — and explicitly address anything listed in the Confidence & Gaps section.
+3. Wait for my instructions. Do not generate any other work yet.`
+        },
+        {
+            id: 'adhd-tutor',
+            title: '4. ADHD Academic Tutor',
+            category: 'Cognitive Framing',
+            description: 'Enforces high academic rigor optimized for high-focus scanning and readability.',
+            text: `Act as my academic tutor. To accommodate my ADHD, apply the following cognitive, content-filtering, and structural rules to every response. Do not simplify the academic rigor, but optimize the delivery for high-focus scanning.
+
+COGNITIVE CONTENT-FILTERING (THE SKEPTICAL SELF-CHECK)
+Before outputting any response, run this mental check on your draft:
+1. "Would a subject-matter expert notice any mathematically or logically essential step missing if this response were any shorter?"
+   - If YES: Keep the step. Genuinely complex proofs must take the space they need.
+   - If NO: Delete the excess. Do not add warm-up lines, redundant restatements, or conversational padding just to seem thorough.
+
+THE INTERACTIVE LEVERS
+Adjust your depth dynamically based on the prefix I use in my message:
+- If I start my message with [QUICK]: Provide only the Bottom Line and the single most critical mathematical/logical point.
+- If I start my message with [DEEP] (or no prefix): Provide the full structural scaffolding below.
+
+STRUCTURAL SCANNING RULES
+1. THE BOTTOM LINE: Start with a bold "Bottom Line" summary. Limit to 1 sentence (maximum 2 if the topic has two distinct, load-bearing parts).
+2. CHUNKING & WHITE SPACE: Never write a paragraph longer than 3 sentences. Use double-line breaks between paragraphs. Do not fracture a single connected mathematical thought across a break just to hit this limit.
+3. BOLDING GUARDRAILS: Bold only the most critical terms, variables, or mathematical transitions. Limit bolding to 1 or 2 key terms per paragraph. If everything is bold, nothing is scannable.
+4. STEP-BY-STEP SCAFFOLDING: For derivations, proofs, or code, list steps as a numbered sequence. Keep formulas on their own lines. Under each step, provide a concise 1-sentence justification (2 sentences maximum, only if logically required).
+5. ZERO CONVERSATIONAL FILLER: Skip all introductory remarks and concluding pleasantries. Begin directly with the bold bottom line.`
+        }
+    ];
+
+    let prompts = [];
+    let activeCategory = 'All';
+
+    // Initialize database on document load
+    window.addEventListener('DOMContentLoaded', () => {
+        const stored = localStorage.getItem('prompts');
+        if (stored) {
+            prompts = JSON.parse(stored);
+        } else {
+            prompts = defaultPrompts;
+            localStorage.setItem('prompts', JSON.stringify(prompts));
+        }
+        renderCategories();
+        renderPrompts();
+    });
+
+    // Extract unique categories and render navigation lists
+    function renderCategories() {
+        const categories = [...new Set(prompts.map(p => p.category))];
+        const container = document.getElementById('dynamicCategories');
+        
+        document.getElementById('count-all').textContent = prompts.length;
+        
+        container.innerHTML = '';
+        categories.forEach(cat => {
+            const count = prompts.filter(p => p.category === cat).length;
+            const activeClass = activeCategory === cat ? 'active' : '';
+            container.innerHTML += `
+                <div class="nav-item ${activeClass}" onclick="selectCategory('${cat}')" id="cat-${cat.replace(/\s+/g, '-')}">
+                    <span>${cat}</span>
+                    <span class="nav-counter">${count}</span>
+                </div>
+            `;
+        });
+    }
+
+    // Toggle active category filter
+    function selectCategory(cat) {
+        activeCategory = cat;
+        
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if (cat === 'All') {
+            document.getElementById('cat-all').classList.add('active');
+        } else {
+            const targetEl = document.getElementById(`cat-${cat.replace(/\s+/g, '-')}`);
+            if (targetEl) targetEl.classList.add('active');
+        }
+        
+        document.getElementById('currentCategoryTitle').textContent = cat === 'All' ? 'All Prompts' : cat;
+        renderPrompts();
+    }
+
+    // Parse text template and locate variable placeholders (e.g. {{Var}})
+    function extractPlaceholders(text) {
+        const regex = /\{\{([^}]+)\}\}/g;
+        const matches = [];
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            if (!matches.includes(match[1])) {
+                matches.push(match[1]);
+            }
+        }
+        return matches;
+    }
+
+    // Render prompts based on category selection and search bar filter
+    function renderPrompts() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const grid = document.getElementById('promptGrid');
+        grid.innerHTML = '';
+
+        const filtered = prompts.filter(p => {
+            const matchesCat = activeCategory === 'All' || p.category === activeCategory;
+            const matchesSearch = p.title.toLowerCase().includes(query) || 
+                                  p.description.toLowerCase().includes(query) || 
+                                  p.text.toLowerCase().includes(query);
+            return matchesCat && matchesSearch;
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px;">No prompts found matching the criteria.</div>`;
+            return;
+        }
+
+        filtered.forEach(p => {
+            const variables = extractPlaceholders(p.text);
+            let variablesHtml = '';
+
+            // Generate field boxes automatically if dynamic variables are found
+            if (variables.length > 0) {
+                variablesHtml = `
+                    <div class="variables-section" id="vars-${p.id}">
+                        ${variables.map(v => `
+                            <div class="variable-group">
+                                <label>${v}</label>
+                                <textarea class="variable-input" data-key="${v}" placeholder="Insert value for ${v}..."></textarea>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            grid.innerHTML += `
+                <div class="prompt-card" data-id="${p.id}">
+                    <div class="card-top">
+                        <div class="card-info">
+                            <span class="card-category">${p.category}</span>
+                            <h3 class="card-title">${p.title}</h3>
+                            <p class="card-description">${p.description}</p>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-icon" onclick="editPrompt('${p.id}')" title="Edit Prompt">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="btn-icon" onclick="deletePrompt('${p.id}')" title="Delete Prompt" style="color: var(--danger);">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                            <button class="btn-copy" onclick="copyPrompt('${p.id}', this)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                Copy Prompt
+                            </button>
+                        </div>
+                    </div>
+
+                    ${variablesHtml}
+
+                    <div class="preview-drawer">
+                        <div class="preview-header" onclick="togglePreview('${p.id}')">
+                            <span>PROMPT VIEW / PREVIEW</span>
+                            <span id="preview-arrow-${p.id}">▼</span>
+                        </div>
+                        <div class="preview-body" id="preview-body-${p.id}">${escapeHtml(p.text)}</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // Toggle Preview visibility
+    function togglePreview(id) {
+        const body = document.getElementById(`preview-body-${id}`);
+        const arrow = document.getElementById(`preview-arrow-${id}`);
+        body.classList.toggle('open');
+        arrow.textContent = body.classList.contains('open') ? '▲' : '▼';
+    }
+
+    // Merge placeholders with input values, then write to device clipboard
+    async function copyPrompt(id, btn) {
+        const prompt = prompts.find(p => p.id === id);
+        if (!prompt) return;
+
+        let finalPrompt = prompt.text;
+        const variablesCard = document.getElementById(`vars-${id}`);
+
+        if (variablesCard) {
+            const inputs = variablesCard.querySelectorAll('.variable-input');
+            inputs.forEach(input => {
+                const key = input.dataset.key;
+                const value = input.value.trim();
+                finalPrompt = finalPrompt.replaceAll(`{{${key}}}`, value);
+            });
+        }
+
+        try {
+            await navigator.clipboard.writeText(finalPrompt);
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Copied!
+            `;
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('copied');
+            }, 2000);
+        } catch (err) {
+            alert("Clipboard access failed.");
+        }
+    }
+
+    // CRUD Modal Controls
+    function openModal(editId = null) {
+        const modal = document.getElementById('promptModal');
+        modal.classList.add('open');
+
+        if (editId) {
+            const p = prompts.find(item => item.id === editId);
+            document.getElementById('modalTitle').textContent = "Edit Prompt";
+            document.getElementById('editId').value = p.id;
+            document.getElementById('formTitle').value = p.title;
+            document.getElementById('formCategory').value = p.category;
+            document.getElementById('formDesc').value = p.description;
+            document.getElementById('formText').value = p.text;
+        } else {
+            document.getElementById('modalTitle').textContent = "Create New Prompt";
+            document.getElementById('editId').value = '';
+            document.getElementById('formTitle').value = '';
+            document.getElementById('formCategory').value = '';
+            document.getElementById('formDesc').value = '';
+            document.getElementById('formText').value = '';
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('promptModal').classList.remove('open');
+    }
+
+    // Save prompt (either append new or update existing item)
+    function savePrompt() {
+        const id = document.getElementById('editId').value;
+        const title = document.getElementById('formTitle').value.trim();
+        const category = document.getElementById('formCategory').value.trim() || 'General';
+        const description = document.getElementById('formDesc').value.trim();
+        const text = document.getElementById('formText').value.trim();
+
+        if (!title || !text) {
+            alert("Title and Prompt Content are required.");
+            return;
+        }
+
+        if (id) {
+            // Update existing entry
+            const index = prompts.findIndex(p => p.id === id);
+            prompts[index] = { id, title, category, description, text };
+        } else {
+            // Add new entry
+            const newId = 'prompt-' + Date.now();
+            prompts.push({ id: newId, title, category, description, text });
+        }
+
+        localStorage.setItem('prompts', JSON.stringify(prompts));
+        closeModal();
+        renderCategories();
+        renderPrompts();
+    }
+
+    // Edit and Delete handlers
+    function editPrompt(id) {
+        openModal(id);
+    }
+
+    function deletePrompt(id) {
+        if (confirm("Are you sure you want to delete this prompt?")) {
+            prompts = prompts.filter(p => p.id !== id);
+            localStorage.setItem('prompts', JSON.stringify(prompts));
+            renderCategories();
+            renderPrompts();
+        }
+    }
+
+    // Helper utilities
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+
+</body>
+</html>
