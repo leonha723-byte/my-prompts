@@ -233,10 +233,53 @@
             font-weight: 600;
         }
 
-        .prompt-grid {
+        /* Grouped Sections Styling */
+        .category-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .category-section-header:first-of-type {
+            margin-top: 0;
+        }
+
+        .category-group-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+        }
+
+        .category-group-title.starred-title {
+            color: var(--warning);
+        }
+
+        .category-group-count {
+            font-size: 11px;
+            background-color: var(--border);
+            color: var(--text-muted);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .category-cards-container {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .prompt-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             padding-bottom: 40px;
         }
 
@@ -908,7 +951,67 @@ STRUCTURAL SCANNING RULES
         return matches;
     }
 
-    // Render workspace cards
+    // Abstract Card HTML generation to a single, maintainable engine
+    function generateCardHtml(p) {
+        const variables = extractPlaceholders(p.text);
+        let variablesHtml = '';
+
+        if (variables.length > 0) {
+            variablesHtml = `
+                <div class="variables-section" id="vars-${p.id}">
+                    ${variables.map(v => `
+                        <div class="variable-group">
+                            <label>${v}</label>
+                            <textarea class="variable-input" data-key="${v}" placeholder="Enter values for ${v}..."></textarea>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        return `
+            <div class="prompt-card" data-id="${p.id}">
+                <div class="card-top">
+                    <div class="card-info">
+                        <div class="card-meta">
+                            <span class="card-category">${p.category}</span>
+                            ${p.pinned ? `<span style="font-size: 11px; color: var(--warning); font-weight: 600; display:flex; align-items:center; gap:2px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Starred</span>` : ''}
+                        </div>
+                        <h3 class="card-title">${p.title}</h3>
+                        <p class="card-description">${p.description}</p>
+                    </div>
+                    <div class="card-actions">
+                        <!-- Toggle Pin Action -->
+                        <button class="btn-icon ${p.pinned ? 'active' : ''}" onclick="togglePin('${p.id}')" title="Star/Pin Prompt">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        </button>
+                        <button class="btn-icon" onclick="editPrompt('${p.id}')" title="Edit Prompt">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="btn-icon" onclick="deletePrompt('${p.id}')" title="Delete Prompt" style="color: var(--danger);">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                        <button class="btn-copy" onclick="copyPrompt('${p.id}', this)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Prompt
+                        </button>
+                    </div>
+                </div>
+
+                ${variablesHtml}
+
+                <div class="preview-drawer">
+                    <div class="preview-header" onclick="togglePreview('${p.id}')">
+                        <span>PROMPT VIEW / PREVIEW</span>
+                        <span id="preview-arrow-${p.id}">▼</span>
+                    </div>
+                    <div class="preview-body" id="preview-body-${p.id}">${escapeHtml(p.text)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Render workspace cards dynamically grouped by category
     function renderPrompts() {
         const query = document.getElementById('searchInput').value.toLowerCase();
         const grid = document.getElementById('promptGrid');
@@ -923,71 +1026,69 @@ STRUCTURAL SCANNING RULES
             return matchesCat && matchesSearch;
         });
 
-        // Organization Priority: Starred items float to top
-        filtered.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
-
         if (filtered.length === 0) {
             grid.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px; font-size: 14px;">No prompts found matching search.</div>`;
             return;
         }
 
-        filtered.forEach(p => {
-            const variables = extractPlaceholders(p.text);
-            let variablesHtml = '';
+        // Section 1: Handle Pinned/Starred Prompts
+        // Pinned prompts are separated into their own unified top-level category only in the "All" view
+        const showGlobalStarred = activeCategory === 'All';
+        let starredSectionHtml = '';
+        let normalPrompts = [...filtered];
 
-            if (variables.length > 0) {
-                variablesHtml = `
-                    <div class="variables-section" id="vars-${p.id}">
-                        ${variables.map(v => `
-                            <div class="variable-group">
-                                <label>${v}</label>
-                                <textarea class="variable-input" data-key="${v}" placeholder="Enter values for ${v}..."></textarea>
-                            </div>
-                        `).join('')}
+        if (showGlobalStarred) {
+            const starredPrompts = filtered.filter(p => p.pinned);
+            normalPrompts = filtered.filter(p => !p.pinned);
+
+            if (starredPrompts.length > 0) {
+                starredSectionHtml = `
+                    <div class="category-section-header">
+                        <span class="category-group-title starred-title">★ Starred Prompts</span>
+                        <span class="category-group-count">${starredPrompts.length}</span>
+                    </div>
+                    <div class="category-cards-container">
+                        ${starredPrompts.map(p => generateCardHtml(p)).join('')}
                     </div>
                 `;
             }
+        }
 
-            grid.innerHTML += `
-                <div class="prompt-card" data-id="${p.id}">
-                    <div class="card-top">
-                        <div class="card-info">
-                            <div class="card-meta">
-                                <span class="card-category">${p.category}</span>
-                                ${p.pinned ? `<span style="font-size: 11px; color: var(--warning); font-weight: 600; display:flex; align-items:center; gap:2px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Starred</span>` : ''}
-                            </div>
-                            <h3 class="card-title">${p.title}</h3>
-                            <p class="card-description">${p.description}</p>
-                        </div>
-                        <div class="card-actions">
-                            <!-- Toggle Pin Action -->
-                            <button class="btn-icon ${p.pinned ? 'active' : ''}" onclick="togglePin('${p.id}')" title="Star Prompt">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                            </button>
-                            <button class="btn-icon" onclick="editPrompt('${p.id}')" title="Edit Prompt">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                            </button>
-                            <button class="btn-icon" onclick="deletePrompt('${p.id}')" title="Delete Prompt" style="color: var(--danger);">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            </button>
-                            <button class="btn-copy" onclick="copyPrompt('${p.id}', this)">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                Copy Prompt
-                            </button>
-                        </div>
-                    </div>
+        // Render Starred Prompts group first
+        if (starredSectionHtml) {
+            grid.innerHTML += starredSectionHtml;
+        }
 
-                    ${variablesHtml}
+        // Section 2: Group the remaining prompts by their category
+        const groups = {};
+        normalPrompts.forEach(p => {
+            if (!groups[p.category]) {
+                groups[p.category] = [];
+            }
+            groups[p.category].push(p);
+        });
 
-                    <div class="preview-drawer">
-                        <div class="preview-header" onclick="togglePreview('${p.id}')">
-                            <span>PROMPT VIEW / PREVIEW</span>
-                            <span id="preview-arrow-${p.id}">▼</span>
-                        </div>
-                        <div class="preview-body" id="preview-body-${p.id}">${escapeHtml(p.text)}</div>
-                    </div>
+        // Alphabetically sort the remaining category sections
+        const sortedCategories = Object.keys(groups).sort();
+
+        sortedCategories.forEach(cat => {
+            const catPrompts = groups[cat];
+            
+            // In a specific category view, sort starred prompts to the top of that specific list
+            if (!showGlobalStarred) {
+                catPrompts.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+            }
+
+            const sectionHtml = `
+                <div class="category-section-header">
+                    <span class="category-group-title">${escapeHtml(cat)}</span>
+                    <span class="category-group-count">${catPrompts.length}</span>
+                </div>
+                <div class="category-cards-container">
+                    ${catPrompts.map(p => generateCardHtml(p)).join('')}
                 </div>
             `;
+            grid.innerHTML += sectionHtml;
         });
     }
 
