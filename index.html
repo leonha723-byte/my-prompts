@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sleek Prompt Workspace</title>
     <style>
         :root {
@@ -17,6 +17,7 @@
             --primary-hover: #4f46e5;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
@@ -25,6 +26,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -36,22 +38,52 @@
             overflow: hidden;
         }
 
+        /* Mobile Header */
+        .mobile-header {
+            display: none;
+            width: 100%;
+            height: 56px;
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 80;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         /* Sidebar Styling */
         aside {
-            width: 280px;
+            width: 290px;
             background-color: var(--bg-base);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             padding: 24px;
             flex-shrink: 0;
+            z-index: 90;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .logo-area {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .logo-area h1 {
@@ -62,7 +94,7 @@
 
         .search-container {
             position: relative;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .search-input {
@@ -70,9 +102,9 @@
             background-color: var(--bg-surface);
             border: 1px solid var(--border);
             color: var(--text-main);
-            padding: 10px 14px;
+            padding: 12px 14px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 16px; /* Prevents auto-zoom on iOS */
             outline: none;
             transition: border-color 0.15s;
         }
@@ -102,12 +134,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px 12px;
+            padding: 10px 12px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             color: var(--text-muted);
             transition: background-color 0.15s, color 0.15s;
+            min-height: 44px; /* Optimal tap target */
         }
 
         .nav-item:hover, .nav-item.active {
@@ -123,13 +156,23 @@
             color: var(--text-muted);
         }
 
+        /* Sidebar Backup Panel */
+        .sidebar-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
         .btn-add-prompt {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
@@ -137,11 +180,34 @@
             justify-content: center;
             gap: 6px;
             transition: background-color 0.15s;
-            margin-top: 16px;
+            min-height: 44px;
         }
 
         .btn-add-prompt:hover {
             background-color: var(--primary-hover);
+        }
+
+        .sync-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sync-buttons button {
+            flex: 1;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            min-height: 40px;
+        }
+
+        .sync-buttons button:hover {
+            border-color: var(--border-focus);
+            color: var(--text-main);
         }
 
         /* Main Workspace Panel */
@@ -171,6 +237,7 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 20px;
+            padding-bottom: 40px;
         }
 
         /* Prompt Card Design */
@@ -178,7 +245,7 @@
             background-color: var(--bg-surface);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 24px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 16px;
@@ -196,6 +263,13 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
+            flex-grow: 1;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .card-category {
@@ -209,8 +283,9 @@
         }
 
         .card-title {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 600;
+            line-height: 1.3;
         }
 
         .card-description {
@@ -222,15 +297,20 @@
         .card-actions {
             display: flex;
             gap: 8px;
+            align-items: center;
         }
 
         .btn-icon {
             background: none;
             border: 1px solid var(--border);
             color: var(--text-muted);
-            padding: 8px;
+            width: 40px;
+            height: 40px;
             border-radius: 6px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all 0.15s;
         }
 
@@ -239,11 +319,17 @@
             color: var(--text-main);
         }
 
+        .btn-icon.active {
+            color: var(--warning);
+            border-color: var(--warning);
+        }
+
         .btn-copy {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 0 16px;
+            height: 40px;
             font-size: 13px;
             font-weight: 600;
             border-radius: 6px;
@@ -256,10 +342,6 @@
 
         .btn-copy:hover {
             background-color: var(--primary-hover);
-        }
-
-        .btn-copy.copied {
-            background-color: var(--success);
         }
 
         /* Dynamic Field Styling */
@@ -290,9 +372,9 @@
             background-color: var(--bg-surface);
             border: 1px solid var(--border);
             color: var(--text-main);
-            padding: 8px 12px;
+            padding: 10px 12px;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 16px; /* Prevents auto-zoom on iOS */
             outline: none;
             font-family: var(--font-sans);
             resize: vertical;
@@ -311,7 +393,7 @@
 
         .preview-header {
             background-color: var(--bg-base);
-            padding: 8px 16px;
+            padding: 10px 16px;
             font-size: 11px;
             font-weight: 600;
             color: var(--text-muted);
@@ -339,7 +421,7 @@
             display: block;
         }
 
-        /* Editor Modal Overlay */
+        /* Modal Settings */
         .modal {
             position: fixed;
             top: 0;
@@ -351,8 +433,8 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 100;
-            padding: 20px;
+            z-index: 120;
+            padding: 16px;
         }
 
         .modal.open {
@@ -367,8 +449,10 @@
             max-width: 650px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            padding: 28px;
+            gap: 16px;
+            padding: 24px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-header {
@@ -385,7 +469,7 @@
         .modal-form {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
         }
 
         .form-group {
@@ -404,9 +488,9 @@
             background-color: var(--bg-base);
             border: 1px solid var(--border);
             color: var(--text-main);
-            padding: 10px 14px;
+            padding: 12px 14px;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 16px; /* iOS zoom mitigation */
             outline: none;
         }
 
@@ -415,7 +499,7 @@
         }
 
         .form-textarea {
-            height: 250px;
+            height: 200px;
             font-family: var(--font-mono);
             resize: vertical;
         }
@@ -427,26 +511,123 @@
             margin-top: 10px;
         }
 
-        .btn-secondary {
-            background: none;
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 10px 20px;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
+        /* Mobile Sidebar Overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 85;
         }
 
-        .btn-secondary:hover {
-            border-color: var(--border-focus);
+        /* Toast notifications system */
+        #toastContainer {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 150;
+        }
+
+        .toast {
+            background-color: var(--bg-surface);
+            border-left: 4px solid var(--primary);
+            color: var(--text-main);
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive Layout Adjustments */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                padding-top: 56px; /* Offset for Mobile Header */
+            }
+
+            .mobile-header {
+                display: flex;
+            }
+
+            aside {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                transform: translateX(-100%);
+                box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            }
+
+            aside.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.open {
+                display: block;
+            }
+
+            main {
+                padding: 16px;
+            }
+
+            .main-header {
+                display: none;
+            }
+
+            .card-top {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .card-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .btn-copy {
+                flex-grow: 1;
+                justify-content: center;
+            }
+
+            #toastContainer {
+                bottom: 16px;
+                right: 16px;
+                left: 16px; /* Full width toast on mobile */
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar navigation and search -->
-    <aside>
+    <!-- Mobile Top Navigation Header -->
+    <div class="mobile-header">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <h2 style="font-size: 16px; font-weight: 700;">PROMPT Workspace</h2>
+        <div style="width: 44px;"></div> <!-- Spacer to center title -->
+    </div>
+
+    <!-- Background dark overlay for Mobile Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar navigation, search and controls -->
+    <aside id="sidebar">
         <div class="logo-area">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-zap" style="color: var(--primary);"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline></svg>
             <h1>PROMPT Workspace</h1>
@@ -465,10 +646,18 @@
             <div id="dynamicCategories"></div>
         </nav>
 
-        <button class="btn-add-prompt" onclick="openModal()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Add New Prompt
-        </button>
+        <!-- Sidebar Actions Area -->
+        <div class="sidebar-footer">
+            <button class="btn-add-prompt" onclick="openModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add New Prompt
+            </button>
+            <div class="sync-buttons">
+                <button onclick="exportData()">Export Backup</button>
+                <button onclick="document.getElementById('importFile').click()">Import Backup</button>
+            </div>
+            <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(this)">
+        </div>
     </aside>
 
     <!-- Main Workspace Area -->
@@ -480,7 +669,7 @@
         <div class="prompt-grid" id="promptGrid"></div>
     </main>
 
-    <!-- Add/Edit Modal (Embedded) -->
+    <!-- Modal Form for Create/Edit -->
     <div class="modal" id="promptModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -504,25 +693,28 @@
                     <input type="text" id="formDesc" class="form-input" placeholder="Briefly describe what this prompt does">
                 </div>
                 <div class="form-group">
-                    <label for="formText">Prompt Content <span style="font-weight: normal; color: var(--text-muted);">(Use double-curly-braces for variables, e.g., {{Variable Name}})</span></label>
+                    <label for="formText">Prompt Content <span style="font-weight: normal; color: var(--text-muted);">(Use {{Variable Name}} syntax for dynamic inputs)</span></label>
                     <textarea id="formText" class="form-input form-textarea" placeholder="Paste your prompt template here..."></textarea>
                 </div>
                 <div class="modal-footer">
                     <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-                    <button class="btn-copy" onclick="savePrompt()">Save Prompt</button>
+                    <button class="btn-add-prompt" onclick="savePrompt()">Save Prompt</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Modern Toast Box -->
+    <div id="toastContainer"></div>
+
 <script>
-    // Initial Seed Data to populate workspace on first open
     const defaultPrompts = [
         {
             id: 'export-state',
             title: '1. Export Session State',
             category: 'Session Management',
             description: 'Compiles current session history and metadata for transfer.',
+            pinned: false,
             text: `Act as a high-fidelity state-serialization compiler. I need to transfer the entirety of our current session's state, rules, background history, logic, schemas, and active backlog to a fresh Gemini instance.
 Utilize your maximum output token capacity to ensure absolute completeness. Stop as soon as everything is captured with high fidelity. Do not pad with restated or low-value filler material just because there is room left in your budget.
 Rules:
@@ -563,6 +755,7 @@ Structure the output as follows:
             title: '2. Continue with Module 2',
             category: 'Session Management',
             description: 'Asks Gemini to output the next module block without conversational fillers.',
+            pinned: false,
             text: 'Continue with Module 2. Start directly with the text. Do not write any conversational intro.'
         },
         {
@@ -570,6 +763,7 @@ Structure the output as follows:
             title: '3. Resume Session in New Instance',
             category: 'Session Management',
             description: 'Injects your generated state block and configures the new session environment.',
+            pinned: false,
             text: `Resume session from this compressed state:
 {{State Block}}
 
@@ -583,6 +777,7 @@ Acknowledge this state. In your very first reply:
             title: '4. ADHD Academic Tutor',
             category: 'Cognitive Framing',
             description: 'Enforces high academic rigor optimized for high-focus scanning and readability.',
+            pinned: false,
             text: `Act as my academic tutor. To accommodate my ADHD, apply the following cognitive, content-filtering, and structural rules to every response. Do not simplify the academic rigor, but optimize the delivery for high-focus scanning.
 
 COGNITIVE CONTENT-FILTERING (THE SKEPTICAL SELF-CHECK)
@@ -608,7 +803,7 @@ STRUCTURAL SCANNING RULES
     let prompts = [];
     let activeCategory = 'All';
 
-    // Initialize database on document load
+    // Application Bootstrap
     window.addEventListener('DOMContentLoaded', () => {
         const stored = localStorage.getItem('prompts');
         if (stored) {
@@ -621,7 +816,34 @@ STRUCTURAL SCANNING RULES
         renderPrompts();
     });
 
-    // Extract unique categories and render navigation lists
+    // Mobile Sidebar Drawer Actions
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('open');
+    }
+
+    // Modern Toast Notification Alert System
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        if (type === 'danger') toast.style.borderLeftColor = 'var(--danger)';
+        if (type === 'warning') toast.style.borderLeftColor = 'var(--warning)';
+        
+        toast.textContent = message;
+        container.appendChild(toast);
+
+        // Animation Triggers
+        setTimeout(() => toast.classList.add('show'), 50);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Category Generation
     function renderCategories() {
         const categories = [...new Set(prompts.map(p => p.category))];
         const container = document.getElementById('dynamicCategories');
@@ -641,7 +863,6 @@ STRUCTURAL SCANNING RULES
         });
     }
 
-    // Toggle active category filter
     function selectCategory(cat) {
         activeCategory = cat;
         
@@ -653,11 +874,28 @@ STRUCTURAL SCANNING RULES
             if (targetEl) targetEl.classList.add('active');
         }
         
-        document.getElementById('currentCategoryTitle').textContent = cat === 'All' ? 'All Prompts' : cat;
+        const titleEl = document.getElementById('currentCategoryTitle');
+        if (titleEl) titleEl.textContent = cat === 'All' ? 'All Prompts' : cat;
+
+        // Auto close side drawer on mobile when option is tapped
+        if (window.innerWidth <= 768) {
+            toggleSidebar();
+        }
+
         renderPrompts();
     }
 
-    // Parse text template and locate variable placeholders (e.g. {{Var}})
+    // Toggle Pin/Star Status
+    function togglePin(id) {
+        const index = prompts.findIndex(p => p.id === id);
+        if (index !== -1) {
+            prompts[index].pinned = !prompts[index].pinned;
+            localStorage.setItem('prompts', JSON.stringify(prompts));
+            renderPrompts();
+            showToast(prompts[index].pinned ? "Prompt pinned to top!" : "Prompt unpinned.");
+        }
+    }
+
     function extractPlaceholders(text) {
         const regex = /\{\{([^}]+)\}\}/g;
         const matches = [];
@@ -670,13 +908,14 @@ STRUCTURAL SCANNING RULES
         return matches;
     }
 
-    // Render prompts based on category selection and search bar filter
+    // Render workspace cards
     function renderPrompts() {
         const query = document.getElementById('searchInput').value.toLowerCase();
         const grid = document.getElementById('promptGrid');
         grid.innerHTML = '';
 
-        const filtered = prompts.filter(p => {
+        // Category & Search Filter
+        let filtered = prompts.filter(p => {
             const matchesCat = activeCategory === 'All' || p.category === activeCategory;
             const matchesSearch = p.title.toLowerCase().includes(query) || 
                                   p.description.toLowerCase().includes(query) || 
@@ -684,8 +923,11 @@ STRUCTURAL SCANNING RULES
             return matchesCat && matchesSearch;
         });
 
+        // Organization Priority: Starred items float to top
+        filtered.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+
         if (filtered.length === 0) {
-            grid.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px;">No prompts found matching the criteria.</div>`;
+            grid.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px; font-size: 14px;">No prompts found matching search.</div>`;
             return;
         }
 
@@ -693,14 +935,13 @@ STRUCTURAL SCANNING RULES
             const variables = extractPlaceholders(p.text);
             let variablesHtml = '';
 
-            // Generate field boxes automatically if dynamic variables are found
             if (variables.length > 0) {
                 variablesHtml = `
                     <div class="variables-section" id="vars-${p.id}">
                         ${variables.map(v => `
                             <div class="variable-group">
                                 <label>${v}</label>
-                                <textarea class="variable-input" data-key="${v}" placeholder="Insert value for ${v}..."></textarea>
+                                <textarea class="variable-input" data-key="${v}" placeholder="Enter values for ${v}..."></textarea>
                             </div>
                         `).join('')}
                     </div>
@@ -711,16 +952,23 @@ STRUCTURAL SCANNING RULES
                 <div class="prompt-card" data-id="${p.id}">
                     <div class="card-top">
                         <div class="card-info">
-                            <span class="card-category">${p.category}</span>
+                            <div class="card-meta">
+                                <span class="card-category">${p.category}</span>
+                                ${p.pinned ? `<span style="font-size: 11px; color: var(--warning); font-weight: 600; display:flex; align-items:center; gap:2px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Starred</span>` : ''}
+                            </div>
                             <h3 class="card-title">${p.title}</h3>
                             <p class="card-description">${p.description}</p>
                         </div>
                         <div class="card-actions">
+                            <!-- Toggle Pin Action -->
+                            <button class="btn-icon ${p.pinned ? 'active' : ''}" onclick="togglePin('${p.id}')" title="Star Prompt">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            </button>
                             <button class="btn-icon" onclick="editPrompt('${p.id}')" title="Edit Prompt">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
                             <button class="btn-icon" onclick="deletePrompt('${p.id}')" title="Delete Prompt" style="color: var(--danger);">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             </button>
                             <button class="btn-copy" onclick="copyPrompt('${p.id}', this)">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
@@ -743,7 +991,6 @@ STRUCTURAL SCANNING RULES
         });
     }
 
-    // Toggle Preview visibility
     function togglePreview(id) {
         const body = document.getElementById(`preview-body-${id}`);
         const arrow = document.getElementById(`preview-arrow-${id}`);
@@ -751,7 +998,6 @@ STRUCTURAL SCANNING RULES
         arrow.textContent = body.classList.contains('open') ? '▲' : '▼';
     }
 
-    // Merge placeholders with input values, then write to device clipboard
     async function copyPrompt(id, btn) {
         const prompt = prompts.find(p => p.id === id);
         if (!prompt) return;
@@ -770,22 +1016,13 @@ STRUCTURAL SCANNING RULES
 
         try {
             await navigator.clipboard.writeText(finalPrompt);
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Copied!
-            `;
-            btn.classList.add('copied');
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.classList.remove('copied');
-            }, 2000);
+            showToast("Copied to clipboard!");
         } catch (err) {
-            alert("Clipboard access failed.");
+            showToast("Clipboard write access blocked", "danger");
         }
     }
 
-    // CRUD Modal Controls
+    // Modal Control Handlers
     function openModal(editId = null) {
         const modal = document.getElementById('promptModal');
         modal.classList.add('open');
@@ -812,7 +1049,6 @@ STRUCTURAL SCANNING RULES
         document.getElementById('promptModal').classList.remove('open');
     }
 
-    // Save prompt (either append new or update existing item)
     function savePrompt() {
         const id = document.getElementById('editId').value;
         const title = document.getElementById('formTitle').value.trim();
@@ -821,18 +1057,18 @@ STRUCTURAL SCANNING RULES
         const text = document.getElementById('formText').value.trim();
 
         if (!title || !text) {
-            alert("Title and Prompt Content are required.");
+            showToast("Title and content are required fields", "warning");
             return;
         }
 
         if (id) {
-            // Update existing entry
             const index = prompts.findIndex(p => p.id === id);
-            prompts[index] = { id, title, category, description, text };
+            prompts[index] = { ...prompts[index], title, category, description, text };
+            showToast("Prompt updated!");
         } else {
-            // Add new entry
             const newId = 'prompt-' + Date.now();
-            prompts.push({ id: newId, title, category, description, text });
+            prompts.push({ id: newId, title, category, description, text, pinned: false });
+            showToast("New prompt added!");
         }
 
         localStorage.setItem('prompts', JSON.stringify(prompts));
@@ -841,21 +1077,63 @@ STRUCTURAL SCANNING RULES
         renderPrompts();
     }
 
-    // Edit and Delete handlers
     function editPrompt(id) {
         openModal(id);
     }
 
     function deletePrompt(id) {
-        if (confirm("Are you sure you want to delete this prompt?")) {
+        if (confirm("Permanently delete this prompt?")) {
             prompts = prompts.filter(p => p.id !== id);
             localStorage.setItem('prompts', JSON.stringify(prompts));
             renderCategories();
             renderPrompts();
+            showToast("Prompt deleted.", "danger");
         }
     }
 
-    // Helper utilities
+    // JSON Synchronizer Backup & Import Utility
+    function exportData() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(prompts, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "prompt_manager_backup.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        showToast("Backup file downloaded!");
+    }
+
+    function importData(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedPrompts = JSON.parse(e.target.result);
+                if (Array.isArray(importedPrompts)) {
+                    if (confirm("Proceed to import and merge these templates?")) {
+                        const existingIds = new Set(prompts.map(p => p.id));
+                        importedPrompts.forEach(p => {
+                            if (!existingIds.has(p.id)) {
+                                prompts.push(p);
+                            }
+                        });
+                        localStorage.setItem('prompts', JSON.stringify(prompts));
+                        renderCategories();
+                        renderPrompts();
+                        showToast("Import merge completed!");
+                    }
+                } else {
+                    showToast("Invalid JSON schema.", "danger");
+                }
+            } catch (err) {
+                showToast("Read process failed.", "danger");
+            }
+        };
+        reader.readAsText(file);
+    }
+
     function escapeHtml(text) {
         return text
             .replace(/&/g, "&amp;")
