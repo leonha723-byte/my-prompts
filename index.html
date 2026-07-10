@@ -38,6 +38,11 @@
             overflow: hidden;
         }
 
+        /* ADMIN LOCK SYSTEM: Hide elements marked as admin-only when not in admin mode */
+        body:not(.admin-mode) .admin-only {
+            display: none !important;
+        }
+
         /* Mobile Header */
         .mobile-header {
             display: none;
@@ -206,6 +211,25 @@
         }
 
         .sync-buttons button:hover {
+            border-color: var(--border-focus);
+            color: var(--text-main);
+        }
+
+        .btn-admin-toggle {
+            background: none;
+            border: 1px dashed var(--border);
+            color: var(--text-muted);
+            padding: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 4px;
+            transition: all 0.15s;
+        }
+
+        .btn-admin-toggle:hover {
             border-color: var(--border-focus);
             color: var(--text-main);
         }
@@ -691,15 +715,16 @@
 
         <!-- Sidebar Actions Area -->
         <div class="sidebar-footer">
-            <button class="btn-add-prompt" onclick="openModal()">
+            <button class="btn-add-prompt admin-only" onclick="openModal()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 Add New Prompt
             </button>
             <div class="sync-buttons">
                 <button onclick="exportData()">Export Backup</button>
-                <button onclick="document.getElementById('importFile').click()">Import Backup</button>
+                <button onclick="document.getElementById('importFile').click()" class="admin-only">Import Backup</button>
             </div>
             <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(this)">
+            <button id="adminToggleBtn" class="btn-admin-toggle" onclick="handleAdminToggle()">Unlock Admin</button>
         </div>
     </aside>
 
@@ -751,6 +776,10 @@
     <div id="toastContainer"></div>
 
 <script>
+    // CRITICAL SECURITY PARAMETER (SHA-256 Hash of Passcode)
+    // Default hashed passcode value is set to "1234"
+    const ADMIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+
     const defaultPrompts = [
         {
             id: 'export-state',
@@ -855,6 +884,13 @@ STRUCTURAL SCANNING RULES
             prompts = defaultPrompts;
             localStorage.setItem('prompts', JSON.stringify(prompts));
         }
+
+        // Restore admin session state if verified previously in this window
+        if (sessionStorage.getItem('isAdmin') === 'true') {
+            document.body.classList.add('admin-mode');
+            document.getElementById('adminToggleBtn').textContent = "Lock Admin";
+        }
+
         renderCategories();
         renderPrompts();
     });
@@ -952,6 +988,7 @@ STRUCTURAL SCANNING RULES
     }
 
     // Abstract Card HTML generation to a single, maintainable engine
+    // Added "admin-only" class wrapper to critical editing buttons
     function generateCardHtml(p) {
         const variables = extractPlaceholders(p.text);
         let variablesHtml = '';
@@ -981,14 +1018,14 @@ STRUCTURAL SCANNING RULES
                         <p class="card-description">${p.description}</p>
                     </div>
                     <div class="card-actions">
-                        <!-- Toggle Pin Action -->
-                        <button class="btn-icon ${p.pinned ? 'active' : ''}" onclick="togglePin('${p.id}')" title="Star/Pin Prompt">
+                        <!-- Toggle Pin Action (Locked for Admin only) -->
+                        <button class="btn-icon admin-only ${p.pinned ? 'active' : ''}" onclick="togglePin('${p.id}')" title="Star/Pin Prompt">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                         </button>
-                        <button class="btn-icon" onclick="editPrompt('${p.id}')" title="Edit Prompt">
+                        <button class="btn-icon admin-only" onclick="editPrompt('${p.id}')" title="Edit Prompt">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
-                        <button class="btn-icon" onclick="deletePrompt('${p.id}')" title="Delete Prompt" style="color: var(--danger);">
+                        <button class="btn-icon admin-only" onclick="deletePrompt('${p.id}')" title="Delete Prompt" style="color: var(--danger);">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                         <button class="btn-copy" onclick="copyPrompt('${p.id}', this)">
@@ -1120,6 +1157,45 @@ STRUCTURAL SCANNING RULES
             showToast("Copied to clipboard!");
         } catch (err) {
             showToast("Clipboard write access blocked", "danger");
+        }
+    }
+
+    // Security Engine (SHA-256 computation in pure client JS)
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
+    }
+
+    // Toggle state: Lock or Unlock edit tools
+    async function handleAdminToggle() {
+        const isAdminActive = document.body.classList.contains('admin-mode');
+
+        if (isAdminActive) {
+            // Lock UI
+            document.body.classList.remove('admin-mode');
+            sessionStorage.removeItem('isAdmin');
+            document.getElementById('adminToggleBtn').textContent = "Unlock Admin";
+            renderPrompts(); // Re-render to hide buttons
+            showToast("Admin locked. Read-Only active.");
+        } else {
+            // Unlock Request
+            const input = prompt("Enter Admin Passcode:");
+            if (input === null) return; // User canceled the dialog box
+
+            const computedHash = await sha256(input);
+
+            if (computedHash === ADMIN_HASH) {
+                document.body.classList.add('admin-mode');
+                sessionStorage.setItem('isAdmin', 'true');
+                document.getElementById('adminToggleBtn').textContent = "Lock Admin";
+                renderPrompts(); // Re-render to reveal buttons
+                showToast("Admin unlocked successfully!");
+            } else {
+                showToast("Invalid passcode.", "danger");
+            }
         }
     }
 
