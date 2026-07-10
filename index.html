@@ -35,10 +35,11 @@
             color: var(--text-main);
             display: flex;
             height: 100vh;
+            height: 100dvh; /* Dynamic viewport height to respect mobile browser address bars */
             overflow: hidden;
         }
 
-        /* ADMIN LOCK SYSTEM: Hide elements marked as admin-only when not in admin mode */
+        /* Hide elements marked as admin-only when not in admin mode */
         body:not(.admin-mode) .admin-only {
             display: none !important;
         }
@@ -53,9 +54,6 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 16px;
-            position: fixed;
-            top: 0;
-            left: 0;
             z-index: 80;
         }
 
@@ -518,7 +516,7 @@
             flex-direction: column;
             gap: 16px;
             padding: 24px;
-            max-height: 90vh;
+            max-height: 85dvh;
             overflow-y: auto;
         }
 
@@ -624,18 +622,21 @@
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
-                padding-top: 56px; /* Offset for Mobile Header */
+                /* Removed standard padding-top to prevent bottom viewport overflow bugs */
             }
 
             .mobile-header {
                 display: flex;
+                position: relative; /* Sit naturally at top of body flex-column */
+                flex-shrink: 0;
+                z-index: 80;
             }
 
             aside {
                 position: fixed;
                 top: 0;
                 left: 0;
-                height: 100vh;
+                height: 100dvh; /* Scale with browser bars dynamically */
                 transform: translateX(-100%);
                 box-shadow: 10px 0 30px rgba(0,0,0,0.5);
             }
@@ -650,6 +651,7 @@
 
             main {
                 padding: 16px;
+                /* main naturally takes up the viewport height minus the header height cleanly */
             }
 
             .main-header {
@@ -1254,6 +1256,7 @@ STRUCTURAL SCANNING RULES
         renderPrompts();
     }
 
+    // Edit and Delete triggers
     function editPrompt(id) {
         openModal(id);
     }
