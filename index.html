@@ -622,7 +622,6 @@
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
-                /* Removed standard padding-top to prevent bottom viewport overflow bugs */
             }
 
             .mobile-header {
@@ -651,7 +650,6 @@
 
             main {
                 padding: 16px;
-                /* main naturally takes up the viewport height minus the header height cleanly */
             }
 
             .main-header {
@@ -871,6 +869,69 @@ STRUCTURAL SCANNING RULES
 3. BOLDING GUARDRAILS: Bold only the most critical terms, variables, or mathematical transitions. Limit bolding to 1 or 2 key terms per paragraph. If everything is bold, nothing is scannable.
 4. STEP-BY-STEP SCAFFOLDING: For derivations, proofs, or code, list steps as a numbered sequence. Keep formulas on their own lines. Under each step, provide a concise 1-sentence justification (2 sentences maximum, only if logically required).
 5. ZERO CONVERSATIONAL FILLER: Skip all introductory remarks and concluding pleasantries. Begin directly with the bold bottom line.`
+        },
+        {
+            id: 'brainstorm-engine',
+            title: '5. Exhaustive Brainstorming Engine',
+            category: 'Ideation & Strategy',
+            description: 'A high-volume, lateral-thinking engine that groups ideas into structured thematic categories.',
+            pinned: false,
+            text: `Act as an exhaustive, lateral-thinking brainstorming engine. I need a high-volume, highly diverse list of distinct ideas for the topic specified below.
+
+To maximize depth, structural variety, and conceptual quality, adhere strictly to the following execution protocol:
+
+1. PLANNING PHASE (Categorization Map): Before generating specific ideas, outline 5 to 8 completely different conceptual categories or thematic angles for this topic. Output this map first. 
+2. BALANCED GENERATION: Distribute your generated ideas roughly evenly across these mapped categories. Do not allow 1 or 2 categories to dominate the entire list.
+3. QUANTITY CEILING & FLOOR: 
+   - If a target number is specified, treat it as a minimum floor. 
+   - If you genuinely exhaust the distinct, non-redundant idea space before reaching the target, stop and explicitly state: "[REAL LOGICAL CEILING REACHED AT KEY #]". Do not generate filler, duplicates, or padded ideas simply to hit the metric.
+   - If no target number is specified, generate as many highly distinct ideas as possible until you exhaust the conceptual space.
+4. FLEXIBLE CONCISENESS: Bold the **Name of Each Idea** for easy scanning. Keep the description for simple ideas to 1 or 2 clear, punchy sentences. Genuinely unconventional, counter-intuitive, or complex ideas are permitted a 3rd sentence if required for conceptual clarity.
+5. NO DUPLICATE LOGIC: Each idea must stand alone. If an idea is structurally too similar to a previously generated one, discard it and generate a new one.
+6. CHUNKING CONTROL: If this massive list begins to exceed your output token capacity, stop at a logical transition point and write exactly: "[TO BE CONTINUED IN MODULE 2]". Do not write any conversational intro or outro.
+7. META-SERIALIZATION: Under a final ## META-SERIALIZATION header, include a highly condensed, 3-line version of these exact rules so that the receiving prompt knows how to replicate this engine in future turns if prompted with "Replicate Ideation Engine".
+
+Structure the output as follows:
+# CONCEPT CATEGORY MAP
+[The 5-8 distinct thematic categories]
+
+# EXHAUSTIVE IDEA LIST
+[Group your ideas under the categories mapped above. Number them sequentially from 1 to your final number]
+
+Topic to brainstorm: {{Topic}}
+Target Number of Ideas (Optional): {{Target Number of Ideas}}`
+        },
+        {
+            id: 'qa-auditor',
+            title: '6. QA Auditor',
+            category: 'Review & Analysis',
+            description: 'Reviews the previous response with deep structural skepticism to find gaps and generate diff patches.',
+            pinned: false,
+            text: `Act as an independent, highly analytical quality assurance auditor. Review the previous response in this conversation with deep structural skepticism. 
+
+If there is a specific technical focus you want me to audit against, it is specified below.
+
+Identify any logical gaps, factual inaccuracies, internal contradictions, or missing edge cases. Adhere strictly to the following auditing protocol:
+
+1. NO FALSE POSITIVES (Safety Valve): If the previous response is structurally sound, accurate, and complete, you must explicitly state: "No critical errors, logical gaps, or internal contradictions identified." Do not manufacture or inflate minor stylistic differences into "errors" just to have something to report.
+2. CLASSIFY BY SEVERITY: Group your findings strictly using the following tags:
+   - [CRITICAL]: Factual errors, broken logic, severe contradictions, or major missing requirements.
+   - [MINOR]: Minor oversights, slight logical inconsistencies, or edge cases that need tightening.
+   - [STYLE/SUGGESTION]: Subjective stylistic improvements, alternative phrasing, or structural suggestions.
+3. DIFF-STYLE PATCHING ONLY: To prevent conversational drift and avoid wasting token limits, do NOT rewrite or regenerate the entire previous response. Instead, output only the specific "patches" or corrections needed to resolve the issues. Use markdown to clearly show the old text/code vs. the corrected text/code.
+4. CONTEXT CONFIDENCE CHECK: If the response being audited occurred far back in the conversation and you are not confident you have 100% of the exact context or original phrasing, state this limitation clearly before beginning the audit.
+
+Structure your output as follows:
+# AUDIT SUMMARY
+[A high-level 2-sentence summary of the overall quality of the response, or your declaration that no errors exist]
+
+# DETAILED FINDINGS
+- [SEVERITY TAG] Finding description, location in text, and exact reason it fails.
+
+# COMPILATION OF PATCHES
+[Specific markdown code or text blocks showing only the corrected sections/modules to replace the broken parts]
+
+Target Audit Focus Area (Optional): {{Specific Focus Area}}`
         }
     ];
 
@@ -1256,7 +1317,6 @@ STRUCTURAL SCANNING RULES
         renderPrompts();
     }
 
-    // Edit and Delete triggers
     function editPrompt(id) {
         openModal(id);
     }
