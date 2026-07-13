@@ -971,11 +971,25 @@ QUERY TO PROCESS: {{Query To Process}}`
     let prompts = [];
     let activeCategory = 'All';
 
-    // Application Bootstrap
+    // Application Bootstrap (with auto-migration for existing users)
     window.addEventListener('DOMContentLoaded', () => {
         const stored = localStorage.getItem('prompts');
         if (stored) {
             prompts = JSON.parse(stored);
+            
+            // Auto-Migration: Detect and merge missing default prompts automatically
+            let migrated = false;
+            defaultPrompts.forEach(dp => {
+                const exists = prompts.some(p => p.id === dp.id);
+                if (!exists) {
+                    prompts.push(dp);
+                    migrated = true;
+                }
+            });
+            
+            if (migrated) {
+                localStorage.setItem('prompts', JSON.stringify(prompts));
+            }
         } else {
             prompts = defaultPrompts;
             localStorage.setItem('prompts', JSON.stringify(prompts));
@@ -1374,6 +1388,14 @@ QUERY TO PROCESS: {{Query To Process}}`
         downloadAnchor.click();
         downloadAnchor.remove();
         showToast("Backup file downloaded!");
+    }
+
+    // Manual Reset Function for safety / troubleshooting
+    function clearStorageAndReset() {
+        if (confirm("Are you sure you want to reset your prompts list back to default? All of your custom modifications will be lost.")) {
+            localStorage.removeItem('prompts');
+            location.reload();
+        }
     }
 
     function importData(input) {
