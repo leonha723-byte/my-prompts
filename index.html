@@ -622,6 +622,7 @@
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
+                /* Removed standard padding-top to prevent bottom viewport overflow bugs */
             }
 
             .mobile-header {
@@ -650,6 +651,7 @@
 
             main {
                 padding: 16px;
+                /* main naturally takes up the viewport height minus the header height cleanly */
             }
 
             .main-header {
@@ -871,67 +873,98 @@ STRUCTURAL SCANNING RULES
 5. ZERO CONVERSATIONAL FILLER: Skip all introductory remarks and concluding pleasantries. Begin directly with the bold bottom line.`
         },
         {
-            id: 'brainstorm-engine',
-            title: '5. Exhaustive Brainstorming Engine',
-            category: 'Ideation & Strategy',
-            description: 'A high-volume, lateral-thinking engine that groups ideas into structured thematic categories.',
+            id: 'brainstorming-engine',
+            title: '5. Brainstorming Engine',
+            category: 'Creative & Ideation',
+            description: 'Generates a highly diverse, structured, and lateral-thinking list of concepts.',
             pinned: false,
-            text: `Act as an exhaustive, lateral-thinking brainstorming engine. I need a high-volume, highly diverse list of distinct ideas for the topic specified below.
+            text: `Act as an exhaustive, lateral-thinking brainstorming engine. I need a high-volume list of highly distinct, diverse, and unique ideas for the topic below.
 
-To maximize depth, structural variety, and conceptual quality, adhere strictly to the following execution protocol:
+1. PLANNING PHASE (Category Map): Before generating any ideas, outline 5-8 genuinely different conceptual categories or thematic angles for this topic. Output this map first. Spread ideas across it roughly evenly as you generate — no single category should end up dominating the list, or the map isn't doing its job.
 
-1. PLANNING PHASE (Categorization Map): Before generating specific ideas, outline 5 to 8 completely different conceptual categories or thematic angles for this topic. Output this map first. 
-2. BALANCED GENERATION: Distribute your generated ideas roughly evenly across these mapped categories. Do not allow 1 or 2 categories to dominate the entire list.
-3. QUANTITY CEILING & FLOOR: 
-   - If a target number is specified, treat it as a minimum floor. 
-   - If you genuinely exhaust the distinct, non-redundant idea space before reaching the target, stop and explicitly state: "[REAL LOGICAL CEILING REACHED AT KEY #]". Do not generate filler, duplicates, or padded ideas simply to hit the metric.
-   - If no target number is specified, generate as many highly distinct ideas as possible until you exhaust the conceptual space.
-4. FLEXIBLE CONCISENESS: Bold the **Name of Each Idea** for easy scanning. Keep the description for simple ideas to 1 or 2 clear, punchy sentences. Genuinely unconventional, counter-intuitive, or complex ideas are permitted a 3rd sentence if required for conceptual clarity.
-5. NO DUPLICATE LOGIC: Each idea must stand alone. If an idea is structurally too similar to a previously generated one, discard it and generate a new one.
-6. CHUNKING CONTROL: If this massive list begins to exceed your output token capacity, stop at a logical transition point and write exactly: "[TO BE CONTINUED IN MODULE 2]". Do not write any conversational intro or outro.
-7. META-SERIALIZATION: Under a final ## META-SERIALIZATION header, include a highly condensed, 3-line version of these exact rules so that the receiving prompt knows how to replicate this engine in future turns if prompted with "Replicate Ideation Engine".
+2. QUANTITY TARGET: If I give you a specific number, treat it as a floor, not a ceiling — hit at least that many, and keep going past it if you're still generating genuinely fresh ideas. If I don't give you a number (or say "as many as you can"), keep generating until you'd have to start padding, repeating structural patterns, or stretching definitions just to keep counting as "distinct" — then stop, tell me you've hit that natural ceiling, and give a rough total. Never stop early just because the list already feels long.
 
-Structure the output as follows:
+3. IF YOU RUN OUT OF ROOM BEFORE YOU RUN OUT OF IDEAS: stop at a clean point in the numbered list, write exactly "[CONTINUE FOR MORE IDEAS]," and wait. When I say "continue," resume numbering exactly where you left off.
+
+4. NO FORCED PADDING: If you genuinely run out of distinct ideas before any stated target, say so directly instead of generating near-duplicates dressed up as different. A shorter, fully genuine list beats a padded one.
+
+5. CONCISENESS: **Bold the idea name**, then 1-2 punchy sentences on its core mechanism or execution. Occasionally a genuinely unconventional idea needs a third sentence to actually land clearly — that's fine, don't force a cut that makes it confusing.
+
+6. PUSH PAST THE OBVIOUS: Don't front-load the list with deliberately weak ideas just to create the appearance of a ramp. Start with your genuinely best obvious ideas, but keep escalating into more unconventional, fringe, and counter-intuitive territory as the list goes on rather than plateauing once a few solid ideas land.
+
+7. NO DUPLICATE LOGIC: Each idea stands alone. If it's substantively the same mechanism as an earlier one with the wording changed, discard it and generate something structurally different instead.
+
+8. ZERO FILLER: No preamble ("Here are some great ideas...") and no closing commentary. Start directly with the Category Map, end when the list ends.
+
+Structure your output as:
 # CONCEPT CATEGORY MAP
-[The 5-8 distinct thematic categories]
-
+[5-8 categories]
 # EXHAUSTIVE IDEA LIST
-[Group your ideas under the categories mapped above. Number them sequentially from 1 to your final number]
+[Ideas grouped under their category, numbered sequentially across the whole list]
 
-Topic to brainstorm: {{Topic}}
-Target Number of Ideas (Optional): {{Target Number of Ideas}}`
+Topic: {{Topic}}
+Target number of ideas: {{Target number of ideas}}`
         },
         {
-            id: 'qa-auditor',
-            title: '6. QA Auditor',
-            category: 'Review & Analysis',
-            description: 'Reviews the previous response with deep structural skepticism to find gaps and generate diff patches.',
+            id: 'adversarial-auditor',
+            title: '6. Adversarial Auditor',
+            category: 'Quality & Review',
+            description: 'Critiques a previous response like an independent, rigorous code and logic auditor.',
             pinned: false,
-            text: `Act as an independent, highly analytical quality assurance auditor. Review the previous response in this conversation with deep structural skepticism. 
+            text: `Review your previous response as an independent, adversarial auditor. Assume there's a real, non-trivial issue somewhere and your job is to find it — not to confirm the response is fine.
 
-If there is a specific technical focus you want me to audit against, it is specified below.
+If you're not confident you have the previous response's exact content in front of you (e.g. it's far back in a long conversation), say so and ask me to paste it again rather than auditing from a fuzzy reconstruction of it.
 
-Identify any logical gaps, factual inaccuracies, internal contradictions, or missing edge cases. Adhere strictly to the following auditing protocol:
+Check for whichever of these apply to the content type:
+- Factual errors or unsupported claims
+- Logical inconsistencies, or steps that don't actually follow from what came before
+- Missing edge cases, exceptions, or boundary conditions
+- Internal contradictions (does it agree with itself throughout?)
+- Syntax, implementation, or execution bugs (for code or formulas)
 
-1. NO FALSE POSITIVES (Safety Valve): If the previous response is structurally sound, accurate, and complete, you must explicitly state: "No critical errors, logical gaps, or internal contradictions identified." Do not manufacture or inflate minor stylistic differences into "errors" just to have something to report.
-2. CLASSIFY BY SEVERITY: Group your findings strictly using the following tags:
-   - [CRITICAL]: Factual errors, broken logic, severe contradictions, or major missing requirements.
-   - [MINOR]: Minor oversights, slight logical inconsistencies, or edge cases that need tightening.
-   - [STYLE/SUGGESTION]: Subjective stylistic improvements, alternative phrasing, or structural suggestions.
-3. DIFF-STYLE PATCHING ONLY: To prevent conversational drift and avoid wasting token limits, do NOT rewrite or regenerate the entire previous response. Instead, output only the specific "patches" or corrections needed to resolve the issues. Use markdown to clearly show the old text/code vs. the corrected text/code.
-4. CONTEXT CONFIDENCE CHECK: If the response being audited occurred far back in the conversation and you are not confident you have 100% of the exact context or original phrasing, state this limitation clearly before beginning the audit.
+For each issue found: state what's wrong, why it's wrong, and tag its severity as [CRITICAL], [MINOR], or [STYLE]. If you genuinely find no significant errors, say so directly — don't manufacture minor nitpicks just to appear thorough. Real stylistic or clarity suggestions are still welcome, but keep them clearly separate from actual errors.
 
-Structure your output as follows:
-# AUDIT SUMMARY
-[A high-level 2-sentence summary of the overall quality of the response, or your declaration that no errors exist]
+Then provide the fix:
+- If only part of the response was flawed, give just the corrected replacement for that part, clearly labeled with what it replaces. Don't regenerate the whole thing if most of it was already correct.
+- If an error has ripple effects elsewhere in the response, say what else needs to change, even if you're not rewriting it in full.
+- If the damage is genuinely widespread, provide the full corrected version.`
+        },
+        {
+            id: 'systems-architect',
+            title: '7. Systems Architect & Technical Educator',
+            category: 'Development & Architecture',
+            description: 'Generates optimized system layouts, trade-offs, edge cases, and robust implementations.',
+            pinned: false,
+            text: `Act as a Principal Systems Architect and Lead Technical Educator. I need an exceptionally optimized, highly accurate, and clearly structured response to the query at the bottom.
 
-# DETAILED FINDINGS
-- [SEVERITY TAG] Finding description, location in text, and exact reason it fails.
+Scale everything below to the query's real complexity. A trivial, well-established question doesn't need exhaustive edge-case hunting or a forced trade-off comparison — a one-line scratchpad and a short answer are correct for that case. A genuinely hard problem deserves the full depth. Every phase still happens, but how much space it takes should track what the query actually calls for, not a fixed target.
 
-# COMPILATION OF PATCHES
-[Specific markdown code or text blocks showing only the corrected sections/modules to replace the broken parts]
+## 1. PLANNING (shown as a condensed summary by default — see note at the end)
+- ASSUMPTIONS: your interpretation of the query and the relevant environment/context, briefly.
+- CONSTRAINTS: real mathematical, hardware, or software boundaries — only ones that actually apply here.
+- EDGE CASES: the genuine edge cases, security risks, or failure points that actually apply — zero, one, or several, whichever is true. Don't invent an extra one to hit a quota.
+- TRADE-OFFS: if there's a genuine choice between approaches, compare them and say which you're using and why. If there's really only one sensible approach, say so instead of manufacturing an alternative just to compare against.
+- If you're not confident about a specific technical claim, flag it as uncertain rather than stating it with unearned confidence. Accuracy matters more than looking exhaustive.
 
-Target Audit Focus Area (Optional): {{Specific Focus Area}}`
+## 2. DRAFT & SELF-CRITIQUE (condensed by default, same visibility rule as above)
+- BOTTLENECK: the weakest point of your first-pass solution.
+- REFINEMENT: how you're adjusting the final answer to address it.
+
+## 3. THE SOLUTION
+- Complete, verbatim code, formulas, or steps. No placeholders or TODOs.
+- Inline comments on non-obvious logic only, not every line.
+- Clean markdown, bolded key terms, structured headers.
+- If you're going to run out of output space, finish this section in full before anything else. Cut Section 4 short, or continue it in a follow-up message, rather than truncating the actual solution.
+
+## 4. EXPLANATION
+- Core logic in plain, non-jargon language — as many points as it actually takes, usually a few. Don't pad to a fixed count.
+- How I can quickly test or verify this works, if that's relevant to what I asked.
+- One or two maintainability warnings, only if there's a real one. Don't invent a tip just to fill the slot.
+
+Phases 1 and 2 exist to make your final answer better, not to be read in full every time. By default, compress each into a short reasoning summary (2-4 lines covering the key assumption, the real trade-off decision if any, and the main risk you're guarding against). If I say "show full reasoning," expand both phases into their complete form.
+
+---
+QUERY TO PROCESS: {{Query To Process}}`
         }
     ];
 
