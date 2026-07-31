@@ -810,7 +810,10 @@ Rules:
 13. PRESERVE WARNINGS, BOUNDARIES, & WORKAROUNDS: Always preserve specific warnings, boundary conditions, constraints, risks, and custom workarounds exactly — these are parameters, not conversational fluff.
 14. REPORT YOUR OWN GAPS: Close with a "Confidence & Gaps" section — anything you're not fully sure you captured, anything ambiguous, anything compressed hard due to length.
 15. CHUNKING CONTROL: If more than one response is genuinely needed, stop at a logical transition point and write exactly "[TO BE CONTINUED IN MODULE 2]" — no conversational intro or outro. Otherwise, complete the export in a single response.
-Structure the output as follows:
+16. ONE-CLICK COPY WRAPPING: To allow me to copy this entire output with a single click, wrap the ENTIRE export from the very first line to the very last line inside a single markdown code block (using \`\`\`text ... \`\`\`). To prevent syntax breakage, do not use backticks (\`\`\`) inside the export itself; use <verbatim_data>...</verbatim_data> tags to wrap any internal code blocks.
+
+Structure the output as follows (enclosed entirely within a single, continuous markdown code block):
+\`\`\`text
 # SESSION STATE EXPORT
 ## 0. SESSION METADATA & CURRENT STATE SNAPSHOT
 [Active date, current year, primary subject, active model version — plus 3-5 lines: what this project is, what's actively being worked on, what's next]
@@ -822,7 +825,8 @@ Structure the output as follows:
 ## 6. CLASS 2: DASHBOARD FRONTEND & VISUAL LAYOUT SPECIFICATIONS
 ## 7. CLASS 1: LOSSLESS ACTIVE WORKING MEMORY (last 3-5 turns, current dilemmas, active context)
 ## 8. CONFIDENCE & GAPS
-## 9. CLASS 1: IMMEDIATE ROADMAP & UNRESOLVED QUEUE (confirmed next steps only)`
+## 9. CLASS 1: IMMEDIATE ROADMAP & UNRESOLVED QUEUE (confirmed next steps only)
+\`\`\``
         },
         {
             id: 'continue-module',
@@ -998,7 +1002,16 @@ QUERY TO PROCESS: {{Query To Process}}`
                 }
             });
             
-            // Specifically verify and update Prompt 8 content if already stored under older schemas
+            // Specifically verify and update Prompt 1 and 8 content if already stored under older schemas
+            const prompt1Index = prompts.findIndex(p => p.id === 'export-state');
+            if (prompt1Index !== -1) {
+                const newText = defaultPrompts.find(p => p.id === 'export-state').text;
+                if (prompts[prompt1Index].text !== newText) {
+                    prompts[prompt1Index].text = newText;
+                    migrated = true;
+                }
+            }
+            
             const prompt8Index = prompts.findIndex(p => p.id === 'verify-reasoning');
             if (prompt8Index !== -1) {
                 const currentText = prompts[prompt8Index].text;
@@ -1387,6 +1400,7 @@ QUERY TO PROCESS: {{Query To Process}}`
         renderPrompts();
     }
 
+    // Edit and Delete triggers
     function editPrompt(id) {
         openModal(id);
     }
@@ -1402,6 +1416,7 @@ QUERY TO PROCESS: {{Query To Process}}`
     }
 
     // JSON Synchronizer Backup & Import Utility
+    // Formatted strictly as single block with raw text constraints
     function exportData() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(prompts, null, 2));
         const downloadAnchor = document.createElement('a');
