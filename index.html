@@ -970,9 +970,12 @@ QUERY TO PROCESS: {{Query To Process}}`
             id: 'verify-reasoning',
             title: '8. Verify Reasoning & Logic',
             category: 'Quality & Review',
-            description: 'Enforces self-correction, rigorous validation, and intellectual honesty before outputting.',
             pinned: false,
-            text: `Take the time to actually verify your reasoning before answering. Double-check the logic, watch for edge cases you might be glossing over, and don't state something with confidence unless you're actually sure of it. If you're genuinely uncertain about part of this, say so instead of guessing.`
+            description: 'Enforces cognitive planning, multi-pass validation, and structured pedagogical scaffolding.',
+            text: `For your responses:
+1. REASONING & VERIFICATION: Take the time to actually verify your reasoning step-by-step before answering. Double-check the logical transitions, look closely for subtle edge cases or logical conflicts you might be glossing over, and do not state claims with confidence unless you are certain of them. If you are genuinely uncertain, explicitly say so instead of guessing.
+2. PEDAGOGICAL PLANNING: Before outputting your final answer, plan the optimal educational scaffolding. Outline the structural progression in your thoughts (e.g., establishing a simple, relatable real-world analogy first, then defining the formal concepts, then demonstrating a concrete step-by-step walkthrough). Ensure the final layout is designed for maximum clarity, logical scannability, and ease of understanding.
+3. ZERO FILLER: Skip conversational pleasantries (like "Sure, I can help with that"). Start directly with your solution, or with a brief, high-value contextual framing sentence only if it is strictly necessary to understand the subsequent logic.`
         }
     ];
 
@@ -994,6 +997,18 @@ QUERY TO PROCESS: {{Query To Process}}`
                     migrated = true;
                 }
             });
+            
+            // Specifically verify and update Prompt 8 content if already stored under older schemas
+            const prompt8Index = prompts.findIndex(p => p.id === 'verify-reasoning');
+            if (prompt8Index !== -1) {
+                const currentText = prompts[prompt8Index].text;
+                const newText = defaultPrompts.find(p => p.id === 'verify-reasoning').text;
+                if (currentText !== newText) {
+                    prompts[prompt8Index].text = newText;
+                    prompts[prompt8Index].description = defaultPrompts.find(p => p.id === 'verify-reasoning').description;
+                    migrated = true;
+                }
+            }
             
             if (migrated) {
                 localStorage.setItem('prompts', JSON.stringify(prompts));
