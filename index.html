@@ -151,6 +151,17 @@
             color: var(--text-main);
         }
 
+        /* Parent-Child hierarchy nesting vertical line layout */
+        .subcategories-container {
+            margin-left: 18px;
+            padding-left: 12px;
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
         .nav-counter {
             font-size: 11px;
             background-color: var(--border);
@@ -706,13 +717,15 @@
             <input type="text" id="searchInput" class="search-input" placeholder="Search prompts..." oninput="renderPrompts()">
         </div>
 
+        <!-- Redesigned navigation with hierarchical indents -->
         <nav class="sidebar-nav">
-            <span class="nav-header">CATEGORIES</span>
+            <span class="nav-header">Workspace</span>
             <div class="nav-item active" onclick="selectCategory('All')" id="cat-all">
-                <span>All Prompts</span>
+                <span style="font-weight: 600;">All Prompts</span>
                 <span class="nav-counter" id="count-all">0</span>
             </div>
-            <div id="dynamicCategories"></div>
+            <!-- Subcategories fall visually under All Prompts with indenting -->
+            <div class="subcategories-container" id="dynamicCategories"></div>
         </nav>
 
         <!-- Sidebar Actions Area -->
@@ -785,8 +798,8 @@
     const defaultPrompts = [
         {
             id: 'export-state',
-            title: '1. Export Session State',
-            category: 'Session Management',
+            title: '1. Copy Session State',
+            category: 'Moving Sessions',
             description: 'Compiles current session history and metadata for transfer.',
             pinned: false,
             text: `Act as a high-fidelity state-serialization compiler. I need to transfer the entirety of our current session's state, rules, background history, logic, schemas, and active backlog to a fresh Gemini instance.
@@ -827,16 +840,16 @@ Structure the output as follows:
         },
         {
             id: 'continue-module',
-            title: '2. Continue with Module 2',
-            category: 'Session Management',
+            title: '2. Force Continue Output',
+            category: 'Moving Sessions',
             description: 'Asks Gemini to output the next module block without conversational fillers.',
             pinned: false,
             text: 'Continue with Module 2. Start directly with the text. Do not write any conversational intro.'
         },
         {
             id: 'resume-session',
-            title: '3. Resume Session in New Instance',
-            category: 'Session Management',
+            title: '3. Paste Session State',
+            category: 'Moving Sessions',
             description: 'Injects your generated state block and configures the new session environment.',
             pinned: false,
             text: `Resume session from this compressed state:
@@ -849,8 +862,8 @@ Acknowledge this state. In your very first reply:
         },
         {
             id: 'adhd-tutor',
-            title: '4. ADHD Academic Tutor',
-            category: 'Cognitive Framing',
+            title: '4. Reader-Friendly Tutor (ADHD)',
+            category: 'Optimizing Responses',
             description: 'Enforces high academic rigor optimized for high-focus scanning and readability.',
             pinned: false,
             text: `Act as my academic tutor. To accommodate my ADHD, apply the following cognitive, content-filtering, and structural rules to every response. Do not simplify the academic rigor, but optimize the delivery for high-focus scanning.
@@ -875,8 +888,8 @@ STRUCTURAL SCANNING RULES
         },
         {
             id: 'brainstorming-engine',
-            title: '5. Brainstorming Engine',
-            category: 'Creative & Ideation',
+            title: '5. Creative Idea Generator',
+            category: 'Ideas & Planning',
             description: 'Generates a highly diverse, structured, and lateral-thinking list of concepts.',
             pinned: false,
             text: `Act as an exhaustive, lateral-thinking brainstorming engine. I need a high-volume list of highly distinct, diverse, and unique ideas for the topic below.
@@ -908,8 +921,8 @@ Target number of ideas: {{Target number of ideas}}`
         },
         {
             id: 'adversarial-auditor',
-            title: '6. Adversarial Auditor',
-            category: 'Quality & Review',
+            title: '6. Ruthless Logic Critic',
+            category: 'Optimizing Responses',
             description: 'Critiques a previous response like an independent, rigorous code and logic auditor.',
             pinned: false,
             text: `Review your previous response as an independent, adversarial auditor. Assume there's a real, non-trivial issue somewhere and your job is to find it — not to confirm the response is fine.
@@ -932,8 +945,8 @@ Then provide the fix:
         },
         {
             id: 'systems-architect',
-            title: '7. Systems Architect & Technical Educator',
-            category: 'Development & Architecture',
+            title: '7. Advanced Project Builder',
+            category: 'Ideas & Planning',
             description: 'Generates optimized system layouts, trade-offs, edge cases, and robust implementations.',
             pinned: false,
             text: `Act as a Principal Systems Architect and Lead Technical Educator. I need an exceptionally optimized, highly accurate, and clearly structured response to the query at the bottom.
@@ -969,14 +982,15 @@ QUERY TO PROCESS: {{Query To Process}}`
         },
         {
             id: 'verify-reasoning',
-            title: '8. Verify Reasoning & Logic',
-            category: 'Quality & Review',
+            title: '8. Smart Logic Filter (No Fluff)',
+            category: 'Optimizing Responses',
             pinned: false,
             description: 'Enforces mental verification, edge-case checks, adaptive output structure, and direct execution.',
             text: `For your responses:
-1. REASONING & VERIFICATION: Take the time to actively verify your logic, check for edge cases, and double-check your reasoning before answering. Do not state unverified assumptions with confidence; if you are uncertain, explicitly say so instead of guessing.
-2. ADAPTIVE STRUCTURE: Tailor your presentation format dynamically to the specific goal of my query (e.g., provide clean modular code for building projects, intuitive frameworks for general suggestions, or structured explanations for learning). Optimize for maximum readability, scannability, and direct understandability without forcing a rigid academic or over-formal structure.
-3. ZERO FILLER: Skip conversational pleasantries (like "Sure, I can help with that"). Start directly with your solution, or with a brief, high-value contextual framing sentence only if it is strictly necessary to understand the subsequent logic.`
+1. REASONING & VERIFICATION: Take the time to actively verify your logic, check for edge cases or exceptions, and double-check your reasoning before answering. Do not state unverified assumptions with confidence — if you're genuinely uncertain about something that matters, say so, but don't hedge on things you're actually sure of.
+2. ADAPTIVE STRUCTURE: Tailor your presentation format dynamically to the specific goal of my query (e.g., clean modular code for building projects, intuitive frameworks for general suggestions, structured explanations for learning). Optimize for readability, scannability, and direct understandability without forcing a rigid or over-formal structure.
+3. ZERO FILLER: Skip conversational pleasantries at the start (like "Sure, I can help with that") and at the end (like "let me know if you have questions"). Start directly with your solution, or with a brief framing sentence only if it's strictly necessary to understand what follows.
+4. AMBIGUITY RESOLUTION: If my query is underspecified, make the most reasonable assumption, state it in one line, and proceed — only ask clarifying questions if guessing would genuinely go in the wrong direction.`
         }
     ];
 
@@ -989,39 +1003,28 @@ QUERY TO PROCESS: {{Query To Process}}`
         if (stored) {
             prompts = JSON.parse(stored);
             
-            // Auto-Migration: Detect and merge missing default prompts automatically
+            // Auto-Migration: Detect and merge/overwrite core properties to match new simple names/categories
             let migrated = false;
             defaultPrompts.forEach(dp => {
-                const exists = prompts.some(p => p.id === dp.id);
-                if (!exists) {
+                const index = prompts.findIndex(p => p.id === dp.id);
+                if (index !== -1) {
+                    // Update metadata to new human-friendly categories and titles
+                    if (prompts[index].title !== dp.title || 
+                        prompts[index].category !== dp.category || 
+                        prompts[index].text !== dp.text || 
+                        prompts[index].description !== dp.description) {
+                        
+                        prompts[index].title = dp.title;
+                        prompts[index].category = dp.category;
+                        prompts[index].text = dp.text;
+                        prompts[index].description = dp.description;
+                        migrated = true;
+                    }
+                } else {
                     prompts.push(dp);
                     migrated = true;
                 }
             });
-            
-            // Specifically verify and update Prompt 1 content if already stored under older schemas
-            const prompt1Index = prompts.findIndex(p => p.id === 'export-state');
-            if (prompt1Index !== -1) {
-                const currentText = prompts[prompt1Index].text;
-                const newText = defaultPrompts.find(p => p.id === 'export-state').text;
-                if (currentText !== newText) {
-                    prompts[prompt1Index].text = newText;
-                    prompts[prompt1Index].description = defaultPrompts.find(p => p.id === 'export-state').description;
-                    migrated = true;
-                }
-            }
-
-            // Specifically verify and update Prompt 8 content if already stored under older schemas
-            const prompt8Index = prompts.findIndex(p => p.id === 'verify-reasoning');
-            if (prompt8Index !== -1) {
-                const currentText = prompts[prompt8Index].text;
-                const newText = defaultPrompts.find(p => p.id === 'verify-reasoning').text;
-                if (currentText !== newText) {
-                    prompts[prompt8Index].text = newText;
-                    prompts[prompt8Index].description = defaultPrompts.find(p => p.id === 'verify-reasoning').description;
-                    migrated = true;
-                }
-            }
             
             if (migrated) {
                 localStorage.setItem('prompts', JSON.stringify(prompts));
@@ -1068,7 +1071,7 @@ QUERY TO PROCESS: {{Query To Process}}`
         }, 3000);
     }
 
-    // Category Generation
+    // Category Generation (Hierarchical Sidebar setup)
     function renderCategories() {
         const categories = [...new Set(prompts.map(p => p.category))];
         const container = document.getElementById('dynamicCategories');
@@ -1400,7 +1403,6 @@ QUERY TO PROCESS: {{Query To Process}}`
         renderPrompts();
     }
 
-    // Edit and Delete triggers
     function editPrompt(id) {
         openModal(id);
     }
