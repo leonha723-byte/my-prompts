@@ -810,10 +810,8 @@ Rules:
 13. PRESERVE WARNINGS, BOUNDARIES, & WORKAROUNDS: Always preserve specific warnings, boundary conditions, constraints, risks, and custom workarounds exactly — these are parameters, not conversational fluff.
 14. REPORT YOUR OWN GAPS: Close with a "Confidence & Gaps" section — anything you're not fully sure you captured, anything ambiguous, anything compressed hard due to length.
 15. CHUNKING CONTROL: If more than one response is genuinely needed, stop at a logical transition point and write exactly "[TO BE CONTINUED IN MODULE 2]" — no conversational intro or outro. Otherwise, complete the export in a single response.
-16. ONE-CLICK COPY WRAPPING: To allow me to copy this entire output with a single click, wrap the ENTIRE export from the very first line to the very last line inside a single markdown code block (using \`\`\`text ... \`\`\`). To prevent syntax breakage, do not use backticks (\`\`\`) inside the export itself; use <verbatim_data>...</verbatim_data> tags to wrap any internal code blocks.
-
-Structure the output as follows (enclosed entirely within a single, continuous markdown code block):
-\`\`\`text
+16. ONE-CLICK COPY FORMATTING: Wrap the ENTIRE generated output (from the very first header "# SESSION STATE EXPORT" to the final line of your response) inside a single, continuous markdown code block using three backticks (\`\`\`text ... \`\`\`) so that I can copy the entire session state with a single click using the native "Copy" button in my chat interface. Do not write any conversational text, introductions, or closing remarks outside of this code block.
+Structure the output as follows:
 # SESSION STATE EXPORT
 ## 0. SESSION METADATA & CURRENT STATE SNAPSHOT
 [Active date, current year, primary subject, active model version — plus 3-5 lines: what this project is, what's actively being worked on, what's next]
@@ -825,8 +823,7 @@ Structure the output as follows (enclosed entirely within a single, continuous m
 ## 6. CLASS 2: DASHBOARD FRONTEND & VISUAL LAYOUT SPECIFICATIONS
 ## 7. CLASS 1: LOSSLESS ACTIVE WORKING MEMORY (last 3-5 turns, current dilemmas, active context)
 ## 8. CONFIDENCE & GAPS
-## 9. CLASS 1: IMMEDIATE ROADMAP & UNRESOLVED QUEUE (confirmed next steps only)
-\`\`\``
+## 9. CLASS 1: IMMEDIATE ROADMAP & UNRESOLVED QUEUE (confirmed next steps only)`
         },
         {
             id: 'continue-module',
@@ -975,10 +972,10 @@ QUERY TO PROCESS: {{Query To Process}}`
             title: '8. Verify Reasoning & Logic',
             category: 'Quality & Review',
             pinned: false,
-            description: 'Enforces cognitive planning, multi-pass validation, and structured pedagogical scaffolding.',
+            description: 'Enforces mental verification, edge-case checks, adaptive output structure, and direct execution.',
             text: `For your responses:
-1. REASONING & VERIFICATION: Take the time to actually verify your reasoning step-by-step before answering. Double-check the logical transitions, look closely for subtle edge cases or logical conflicts you might be glossing over, and do not state claims with confidence unless you are certain of them. If you are genuinely uncertain, explicitly say so instead of guessing.
-2. PEDAGOGICAL PLANNING: Before outputting your final answer, plan the optimal educational scaffolding. Outline the structural progression in your thoughts (e.g., establishing a simple, relatable real-world analogy first, then defining the formal concepts, then demonstrating a concrete step-by-step walkthrough). Ensure the final layout is designed for maximum clarity, logical scannability, and ease of understanding.
+1. REASONING & VERIFICATION: Take the time to actively verify your logic, check for edge cases, and double-check your reasoning before answering. Do not state unverified assumptions with confidence; if you are uncertain, explicitly say so instead of guessing.
+2. ADAPTIVE STRUCTURE: Tailor your presentation format dynamically to the specific goal of my query (e.g., provide clean modular code for building projects, intuitive frameworks for general suggestions, or structured explanations for learning). Optimize for maximum readability, scannability, and direct understandability without forcing a rigid academic or over-formal structure.
 3. ZERO FILLER: Skip conversational pleasantries (like "Sure, I can help with that"). Start directly with your solution, or with a brief, high-value contextual framing sentence only if it is strictly necessary to understand the subsequent logic.`
         }
     ];
@@ -1002,16 +999,19 @@ QUERY TO PROCESS: {{Query To Process}}`
                 }
             });
             
-            // Specifically verify and update Prompt 1 and 8 content if already stored under older schemas
+            // Specifically verify and update Prompt 1 content if already stored under older schemas
             const prompt1Index = prompts.findIndex(p => p.id === 'export-state');
             if (prompt1Index !== -1) {
+                const currentText = prompts[prompt1Index].text;
                 const newText = defaultPrompts.find(p => p.id === 'export-state').text;
-                if (prompts[prompt1Index].text !== newText) {
+                if (currentText !== newText) {
                     prompts[prompt1Index].text = newText;
+                    prompts[prompt1Index].description = defaultPrompts.find(p => p.id === 'export-state').description;
                     migrated = true;
                 }
             }
-            
+
+            // Specifically verify and update Prompt 8 content if already stored under older schemas
             const prompt8Index = prompts.findIndex(p => p.id === 'verify-reasoning');
             if (prompt8Index !== -1) {
                 const currentText = prompts[prompt8Index].text;
@@ -1416,7 +1416,6 @@ QUERY TO PROCESS: {{Query To Process}}`
     }
 
     // JSON Synchronizer Backup & Import Utility
-    // Formatted strictly as single block with raw text constraints
     function exportData() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(prompts, null, 2));
         const downloadAnchor = document.createElement('a');
