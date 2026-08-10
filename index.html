@@ -795,48 +795,71 @@
     // Default hashed passcode value is set to "1234"
     const ADMIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
 
-    const defaultPrompts = [
-        {
+    const defaultPrompts = [{
             id: 'export-state',
             title: '1. Copy Session State',
             category: 'Moving Sessions',
             description: 'Compiles current session history and metadata for transfer.',
             pinned: false,
             text: `Act as a high-fidelity state-serialization compiler. I need to transfer the entirety of our current session's state, rules, background history, logic, schemas, and active backlog to a fresh Gemini instance.
+
 Utilize your maximum output token capacity to ensure absolute completeness. Stop as soon as everything is captured with high fidelity. Do not pad with restated or low-value filler material just because there is room left in your budget.
+
 Rules:
+
 1. DENSE TECHNICAL STYLE: Do not use cryptic, overly abbreviated shorthand. Use clear, dense, highly descriptive, structurally complete prose. Keep logical connectors ("because of", "caused by", "linked via", "designed to prevent") fully intact so relationships between variables, concepts, and rules stay precise.
+
 2. IMPLEMENTATION STATUS FLAGGING: Explicitly tag every database column, calculated formula, and logical rule in Class 2 with either [ACTIVE/IMPLEMENTED] or [PROPOSED/UNDER TEST], so the receiving instance never assumes a discussed feature is already built.
+
 3. TABULAR DATA MATRIX: Format all data dictionaries, schemas, SME mapping matrices, and key-value tables as standard Markdown tables. No conversational bullet lists or arrow notation for tabular data.
+
 4. THREE-CLASS VALUE PRIORITIZATION (by structural value, not chronology):
-- CLASS 1 (Top priority): Active working state — last 5 turns, active dilemmas, immediate next steps. 100% lossless.
-- CLASS 2 (High priority): Critical logical state — rules, definitions, formulas, code, schemas, guidelines, alternatives under active evaluation. 100% lossless regardless of how old.
-- CLASS 3 (Medium priority): Background/logistical context — timelines, personal background, resolved milestones, admin info. May be condensed, but retain key details.
+   - CLASS 1 (Top priority): Active working state — last 5 turns, active dilemmas, immediate next steps. 100% lossless.
+   - CLASS 2 (High priority): Critical logical state — rules, definitions, formulas, code, schemas, guidelines, alternatives under active evaluation. 100% lossless regardless of how old.
+   - CLASS 3 (Medium priority): Background/logistical context — timelines, personal background, resolved milestones, admin info. May be condensed, but retain key details.
+
 5. SYMMETRIC WEIGHTING: Give my personal background, sequence of past attempts, and explanations equal prominence to technical data and solutions.
+
 6. FILTER UNCOMMITTED LOGISTICS ONLY: Only drop unconfirmed physical/logistical actions (purchases, tasks I explicitly rejected or postponed). Preserve all theoretical ideas, design options, and alternative logic currently under discussion.
+
 7. OCR & VISUAL PRESERVATION: Transcribe and preserve all data, text, tables, diagrams, and logic that came from uploaded screenshots or images.
+
 8. VERBATIM PRESERVATION: Keep formulas, complete code blocks, and specific variables 100% verbatim inside <verbatim_data>...</verbatim_data> tags. Do not nest markdown backticks inside these tags — raw plain text only, to prevent syntax corruption.
+
+8b. IDENTIFIER FIDELITY: Every technical identifier — file names, table names, column/field names, variable names, function names, measure names, API endpoints, config keys — must be copied character-for-character: exact casing, underscores, spacing, and pluralization. Never substitute a descriptive paraphrase or cleaned-up version (e.g., do not turn CorrosionFlag_Bool into "the corrosion flag column"). This applies regardless of which section the identifier appears in, including identifiers mentioned only once in passing.
+
 9. PRESERVE FRONTEND DESIGN & DAX METRICS: Document any frontend visual layouts, active slicer configurations, report-level filters, and DAX measures currently implemented.
+
 10. TRACK UNVERIFIED ASSUMPTIONS & PLACEHOLDERS: Clearly document any temporary placeholder values, assumptions, or dummy coefficients currently used for debugging/testing.
+
 11. NO INVENTION: Do not infer or invent any schema field, formula, variable, or specific value not actually discussed. If you're genuinely filling a small gap, mark it [INFERRED] rather than stating it as established fact.
-12. SYNTAX SAFETY: Never split an open/close <verbatim_data> tag or code block across modules. If a block doesn't fit at the end of a response, push the entire block to the next one.
+
+12. SYNTAX SAFETY: Never split an open/close <verbatim_data> tag, code block, or table across modules. If a block or table doesn't fit at the end of a response, push the entire item to the next module.
+
 13. PRESERVE WARNINGS, BOUNDARIES, & WORKAROUNDS: Always preserve specific warnings, boundary conditions, constraints, risks, and custom workarounds exactly — these are parameters, not conversational fluff.
+
 14. REPORT YOUR OWN GAPS: Close with a "Confidence & Gaps" section — anything you're not fully sure you captured, anything ambiguous, anything compressed hard due to length.
+
 15. CHUNKING CONTROL: If more than one response is genuinely needed, stop at a logical transition point and write exactly "[TO BE CONTINUED IN MODULE 2]" — no conversational intro or outro. Otherwise, complete the export in a single response.
+
 16. ONE-CLICK COPY FORMATTING: Wrap the ENTIRE generated output (from the very first header "# SESSION STATE EXPORT" to the final line of your response) inside a single, continuous markdown code block using three backticks (\`\`\`text ... \`\`\`) so that I can copy the entire session state with a single click using the native "Copy" button in my chat interface. Do not write any conversational text, introductions, or closing remarks outside of this code block.
+
 Structure the output as follows:
+
 # SESSION STATE EXPORT
 ## 0. SESSION METADATA & CURRENT STATE SNAPSHOT
 [Active date, current year, primary subject, active model version — plus 3-5 lines: what this project is, what's actively being worked on, what's next]
 ## 1. CLASS 3: GENERAL BACKGROUND, USER PROFILE & CHRONOLOGICAL HISTORICAL MILESTONES
-## 2. CLASS 2: LOSSLESS DESCRIPTIVE DICTIONARY & SCHEMA CANDIDATES (tables: implemented vs. proposed)
-## 3. CLASS 2: SME DESIGN DEBATES & EXPERIMENTAL LOGIC (tables: tentative rules, columns under trial, caveats)
-## 4. CLASS 2: VERBATIM ETL STATE, DAX MEASURES, & MATHEMATICAL FORMULAS (Ensure all are wrapped in <verbatim_data> tags)
-## 5. CLASS 2: ACTIVE TESTING ASSUMPTIONS & PLACEHOLDERS
-## 6. CLASS 2: DASHBOARD FRONTEND & VISUAL LAYOUT SPECIFICATIONS
-## 7. CLASS 1: LOSSLESS ACTIVE WORKING MEMORY (last 3-5 turns, current dilemmas, active context)
-## 8. CONFIDENCE & GAPS
-## 9. CLASS 1: IMMEDIATE ROADMAP & UNRESOLVED QUEUE (confirmed next steps only)`
+## 2. CLASS 2: MASTER IDENTIFIER REGISTRY (Verbatim, exact strings only)
+[A single deduplicated Markdown table covering the entire session: Exact String | Type (file/table/column/variable/measure/config) | Status ([ACTIVE] or [PROPOSED]) | First Mentioned / Context]
+## 3. CLASS 2: LOSSLESS DESCRIPTIVE DICTIONARY & SCHEMA CANDIDATES (tables: implemented vs. proposed)
+## 4. CLASS 2: SME DESIGN DEBATES & EXPERIMENTAL LOGIC (tables: tentative rules, columns under trial, caveats)
+## 5. CLASS 2: VERBATIM ETL STATE, DAX MEASURES, & MATHEMATICAL FORMULAS (wrapped in <verbatim_data> tags)
+## 6. CLASS 2: ACTIVE TESTING ASSUMPTIONS & PLACEHOLDERS
+## 7. CLASS 2: DASHBOARD FRONTEND & VISUAL LAYOUT SPECIFICATIONS
+## 8. CLASS 1: LOSSLESS ACTIVE WORKING MEMORY (last 3-5 turns, current dilemmas, active context)
+## 9. CONFIDENCE & GAPS
+## 10. CLASS 1: IMMEDIATE ROADMAP & UNRESOLVED QUEUE (confirmed next steps only)`
         },
         {
             id: 'continue-module',
