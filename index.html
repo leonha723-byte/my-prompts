@@ -957,7 +957,7 @@
     // Added "admin-only" class wrapper to critical editing buttons
     function generateCardHtml(p) {
         const variables = extractPlaceholders(p.text);
-        const safeId = encodeURIComponent(p.id);
+        const safeId = encodeDomKey(p.id);
         let variablesHtml = '';
 
         if (variables.length > 0) {
@@ -1099,7 +1099,7 @@
     }
 
     function togglePreview(id) {
-        const safeId = encodeURIComponent(id);
+        const safeId = encodeDomKey(id);
         const body = document.getElementById(`preview-body-${safeId}`);
         const arrow = document.getElementById(`preview-arrow-${safeId}`);
         body.classList.toggle('open');
@@ -1111,7 +1111,7 @@
         if (!prompt) return;
 
         const values = {};
-        const variablesCard = document.getElementById(`vars-${encodeURIComponent(id)}`);
+        const variablesCard = document.getElementById(`vars-${encodeDomKey(id)}`);
         if (variablesCard) {
             variablesCard.querySelectorAll('.variable-input').forEach(input => {
                 values[decodeURIComponent(input.dataset.key)] = input.value;
