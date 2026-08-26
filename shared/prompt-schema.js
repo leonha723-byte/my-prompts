@@ -37,6 +37,10 @@
             errors.push('Invalid optional field: pinned must be a boolean.');
         }
 
+        if (/\{\{\s*\}\}/.test(prompt.text)) {
+            errors.push('Variable names cannot be empty.');
+        }
+
         return { prompt: errors.length ? null : prompt, errors };
     }
 
