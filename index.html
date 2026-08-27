@@ -866,6 +866,7 @@
             document.getElementById('adminToggleBtn').textContent = "Lock Admin";
         }
 
+        document.getElementById('promptGrid').addEventListener('click', handlePromptGridClick);
         renderCategories();
         renderPrompts();
     });
@@ -953,6 +954,34 @@
         return PromptTemplate.extractVariables(text);
     }
 
+    function encodeDomKey(value) {
+        return encodeURIComponent(String(value));
+    }
+
+    function handlePromptGridClick(event) {
+        const actionTarget = event.target.closest('[data-prompt-action]');
+        if (!actionTarget || !event.currentTarget.contains(actionTarget)) return;
+
+        const id = decodeURIComponent(actionTarget.dataset.promptId);
+        switch (actionTarget.dataset.promptAction) {
+            case 'pin':
+                togglePin(id);
+                break;
+            case 'edit':
+                editPrompt(id);
+                break;
+            case 'delete':
+                deletePrompt(id);
+                break;
+            case 'copy':
+                copyPrompt(id, actionTarget);
+                break;
+            case 'preview':
+                togglePreview(id);
+                break;
+        }
+    }
+
     // Abstract Card HTML generation to a single, maintainable engine
     // Added "admin-only" class wrapper to critical editing buttons
     function generateCardHtml(p) {
@@ -988,16 +1017,16 @@
                         <p class="card-description">${escapeHtml(p.description)}</p>
                     </div>
                     <div class="card-actions">
-                        <button class="btn-icon admin-only ${p.pinned ? 'active' : ''}" onclick="togglePin(decodeURIComponent('${safeId}'))" title="Star/Pin Prompt">
+                        <button class="btn-icon admin-only ${p.pinned ? 'active' : ''}" data-prompt-action="pin" data-prompt-id="${safeId}" title="Star/Pin Prompt">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                         </button>
-                        <button class="btn-icon admin-only" onclick="editPrompt(decodeURIComponent('${safeId}'))" title="Edit Prompt">
+                        <button class="btn-icon admin-only" data-prompt-action="edit" data-prompt-id="${safeId}" title="Edit Prompt">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
-                        <button class="btn-icon admin-only" onclick="deletePrompt(decodeURIComponent('${safeId}'))" title="Delete Prompt" style="color: var(--danger);">
+                        <button class="btn-icon admin-only" data-prompt-action="delete" data-prompt-id="${safeId}" title="Delete Prompt" style="color: var(--danger);">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2h-14a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
-                        <button class="btn-copy" onclick="copyPrompt(decodeURIComponent('${safeId}'), this)">
+                        <button class="btn-copy" data-prompt-action="copy" data-prompt-id="${safeId}">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             Copy Prompt
                         </button>
@@ -1007,7 +1036,7 @@
                 ${variablesHtml}
 
                 <div class="preview-drawer">
-                    <div class="preview-header" onclick="togglePreview(decodeURIComponent('${safeId}'))">
+                    <div class="preview-header" data-prompt-action="preview" data-prompt-id="${safeId}">
                         <span>PROMPT VIEW / PREVIEW</span>
                         <span id="preview-arrow-${safeId}">▼</span>
                     </div>
@@ -1330,3 +1359,4 @@
 
 </body>
 </html>
+
