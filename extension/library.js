@@ -49,6 +49,56 @@
             });
     }
 
+    function buildCategoryTree(prompts) {
+        const root = { children: [], prompts: [] };
+
+        prompts.forEach(prompt => {
+            const parts = String(prompt.category || '')
+                .split('/')
+                .map(part => part.trim())
+                .filter(Boolean);
+            let parent = root;
+            let path = '';
+
+            parts.forEach(name => {
+                path = path ? `${path}/${name}` : name;
+                let node = parent.children.find(child => child.name === name);
+                if (!node) {
+                    node = { name, path, children: [], prompts: [] };
+                    parent.children.push(node);
+                }
+                parent = node;
+            });
+
+            if (parent !== root) parent.prompts.push(prompt);
+        });
+
+        function sortNode(node) {
+            node.children.sort((left, right) => left.name.localeCompare(right.name));
+            node.prompts.sort((left, right) => left.title.localeCompare(right.title));
+            node.children.forEach(sortNode);
+        }
+
+        sortNode(root);
+        return root.children;
+    }
+
+    function categoryPaths(prompts) {
+        const paths = [];
+        function visit(nodes) {
+            nodes.forEach(node => {
+                paths.push(node.path);
+                visit(node.children);
+            });
+        }
+        visit(buildCategoryTree(prompts));
+        return paths;
+    }
+
+    function isCategoryExpanded(path, expandedPaths, query) {
+        return Boolean(String(query || '').trim()) || expandedPaths.has(path);
+    }
+
     function importLibrary(text, existingPrompts) {
         const imported = global.PromptTransfer.parseImportText(text);
         if (imported.fatalError) return imported;
@@ -62,6 +112,9 @@
         loadLibrary,
         saveLibrary,
         filterPrompts,
+        buildCategoryTree,
+        categoryPaths,
+        isCategoryExpanded,
         importLibrary
     });
 })(window);
