@@ -88,5 +88,3 @@
         normalizePromptCollection
     });
 })(window);
-
-
