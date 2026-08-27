@@ -260,11 +260,20 @@
     async function toggleSelectedPin() {
         const prompt = selectedPrompt();
         if (!prompt) return setStatus('Select a prompt first.', 'warning');
-        prompt.pinned = !prompt.pinned;
-        await ExtensionLibrary.saveLibrary(chrome.storage.local, state.prompts);
-        renderLibrary();
-        renderDetail();
-        setStatus(prompt.pinned ? 'Prompt pinned.' : 'Prompt unpinned.', 'success');
+        const pinned = !prompt.pinned;
+        try {
+            state.prompts = await ExtensionLibrary.setPromptPinned(
+                chrome.storage.local,
+                state.prompts,
+                prompt.id,
+                pinned
+            );
+            renderLibrary();
+            renderDetail();
+            setStatus(pinned ? 'Prompt pinned.' : 'Prompt unpinned.', 'success');
+        } catch (error) {
+            setStatus('Unable to save the favorite. Try again.', 'error');
+        }
     }
 
     async function insertSelectedPrompt() {
@@ -358,5 +367,6 @@
         elements.status.className = `status ${type || ''}`;
     }
 })();
+
 
 
