@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Prompt insertion smoke fixture</title>
+    <style>
+        body { font: 16px sans-serif; max-width: 720px; margin: 32px auto; }
+        textarea, input, [contenteditable] { display: block; width: 100%; min-height: 48px; margin: 8px 0 16px; }
+        [contenteditable] { border: 1px solid #777; padding: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Prompt insertion smoke fixture</h1>
+    <form id="testForm">
+        <label>Textarea<textarea id="textarea">Before after</textarea></label>
+        <button type="button" data-target="textarea">Insert into textarea</button>
+
+        <label>Text input<input id="textInput" type="text" value="Before after"></label>
+        <button type="button" data-target="textInput">Insert into input</button>
+
+        <label>Contenteditable<div id="editable" contenteditable="true">Before </div></label>
+        <button type="button" data-target="editable">Insert into contenteditable</button>
+    </form>
+    <p id="result" role="status"></p>
+    <p>Submissions: <span id="submissions">0</span></p>
+
+    <script src="../../extension/insertion.js"></script>
+    <script>
+        let submissions = 0;
+        document.getElementById('testForm').addEventListener('submit', event => {
+            event.preventDefault();
+            submissions += 1;
+            document.getElementById('submissions').textContent = submissions;
+        });
+
+        document.querySelectorAll('[data-target]').forEach(button => {
+            button.addEventListener('click', () => {
+                const target = document.getElementById(button.dataset.target);
+                target.focus();
+                if (target.setSelectionRange) {
+                    const position = target.value.indexOf('after');
+                    target.setSelectionRange(position, position);
+                } else {
+                    const range = document.createRange();
+                    range.selectNodeContents(target);
+                    range.collapse(false);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                const result = PromptInsertion.insertPromptIntoPage('INSERTED ');
+                document.getElementById('result').textContent = JSON.stringify(result);
+            });
+        });
+    </script>
+</body>
+</html>
+
