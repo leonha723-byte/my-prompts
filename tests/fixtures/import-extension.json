@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-08-26T00:00:00.000Z",
+  "prompts": [
+    {
+      "id": "extension-import-smoke",
+      "title": "Imported Extension Prompt",
+      "category": "Extension Tests",
+      "description": "Browser import fixture.",
+      "text": "Imported {{Value}}",
+      "pinned": false
+    }
+  ]
+}
+
