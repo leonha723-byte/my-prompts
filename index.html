@@ -790,284 +790,88 @@
     <!-- Modern Toast Box -->
     <div id="toastContainer"></div>
 
+<script src="shared/prompt-schema.js"></script>
+<script src="shared/prompt-template.js"></script>
+<script src="shared/prompt-transfer.js"></script>
 <script>
     // CRITICAL SECURITY PARAMETER (SHA-256 Hash of Passcode)
     // Default hashed passcode value is set to "1234"
     const ADMIN_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
 
-    const defaultPrompts = [{
-            id: 'export-state',
-            title: '1. Copy Session State',
-            category: 'Moving Sessions',
-            description: 'Compiles current session history and metadata for transfer.',
-            pinned: false,
-            text: `Act as a high-fidelity state-serialization compiler. I need to transfer the entirety of our current session's state, rules, background history, logic, schemas, and active backlog to a fresh Gemini instance.
-
-Utilize your maximum output token capacity to ensure absolute completeness. Stop as soon as everything is captured with high fidelity. Do not pad with restated or low-value filler material just because there is room left in your budget.
-
-Rules:
-
-1. DENSE TECHNICAL STYLE: Do not use cryptic, overly abbreviated shorthand. Use clear, dense, highly descriptive, structurally complete prose. Keep logical connectors ("because of", "caused by", "linked via", "designed to prevent") fully intact so relationships between variables, concepts, and rules stay precise.
-
-2. IMPLEMENTATION STATUS FLAGGING: Explicitly tag every database column, calculated formula, and logical rule in Class 2 with either [ACTIVE/IMPLEMENTED] or [PROPOSED/UNDER TEST], so the receiving instance never assumes a discussed feature is already built.
-
-3. TABULAR DATA MATRIX: Format all data dictionaries, schemas, SME mapping matrices, and key-value tables as standard Markdown tables. No conversational bullet lists or arrow notation for tabular data.
-
-4. THREE-CLASS VALUE PRIORITIZATION (by structural value, not chronology):
-   - CLASS 1 (Top priority): Active working state — last 5 turns, active dilemmas, immediate next steps. 100% lossless.
-   - CLASS 2 (High priority): Critical logical state — rules, definitions, formulas, code, schemas, guidelines, alternatives under active evaluation. 100% lossless regardless of how old.
-   - CLASS 3 (Medium priority): Background/logistical context — timelines, personal background, resolved milestones, admin info. May be condensed, but retain key details.
-
-5. SYMMETRIC WEIGHTING: Give my personal background, sequence of past attempts, and explanations equal prominence to technical data and solutions.
-
-6. FILTER UNCOMMITTED LOGISTICS ONLY: Only drop unconfirmed physical/logistical actions (purchases, tasks I explicitly rejected or postponed). Preserve all theoretical ideas, design options, and alternative logic currently under discussion.
-
-7. OCR & VISUAL PRESERVATION: Transcribe and preserve all data, text, tables, diagrams, and logic that came from uploaded screenshots or images.
-
-8. VERBATIM PRESERVATION: Keep formulas, complete code blocks, and specific variables 100% verbatim inside <verbatim_data>...</verbatim_data> tags. Do not nest markdown backticks inside these tags — raw plain text only, to prevent syntax corruption.
-
-8b. IDENTIFIER FIDELITY: Every technical identifier — file names, table names, column/field names, variable names, function names, measure names, API endpoints, config keys — must be copied character-for-character: exact casing, underscores, spacing, and pluralization. Never substitute a descriptive paraphrase or cleaned-up version (e.g., do not turn CorrosionFlag_Bool into "the corrosion flag column"). This applies regardless of which section the identifier appears in, including identifiers mentioned only once in passing.
-
-9. PRESERVE FRONTEND DESIGN & DAX METRICS: Document any frontend visual layouts, active slicer configurations, report-level filters, and DAX measures currently implemented.
-
-10. TRACK UNVERIFIED ASSUMPTIONS & PLACEHOLDERS: Clearly document any temporary placeholder values, assumptions, or dummy coefficients currently used for debugging/testing.
-
-11. NO INVENTION: Do not infer or invent any schema field, formula, variable, or specific value not actually discussed. If you're genuinely filling a small gap, mark it [INFERRED] rather than stating it as established fact.
-
-12. SYNTAX SAFETY: Never split an open/close <verbatim_data> tag, code block, or table across modules. If a block or table doesn't fit at the end of a response, push the entire item to the next module.
-
-13. PRESERVE WARNINGS, BOUNDARIES, & WORKAROUNDS: Always preserve specific warnings, boundary conditions, constraints, risks, and custom workarounds exactly — these are parameters, not conversational fluff.
-
-14. REPORT YOUR OWN GAPS: Close with a "Confidence & Gaps" section — anything you're not fully sure you captured, anything ambiguous, anything compressed hard due to length.
-
-15. CHUNKING CONTROL: If more than one response is genuinely needed, stop at a logical transition point and write exactly "[TO BE CONTINUED IN MODULE 2]" — no conversational intro or outro. Otherwise, complete the export in a single response.
-
-16. ONE-CLICK COPY FORMATTING: Wrap the ENTIRE generated output (from the very first header "# SESSION STATE EXPORT" to the final line of your response) inside a single, continuous markdown code block using three backticks (\`\`\`text ... \`\`\`) so that I can copy the entire session state with a single click using the native "Copy" button in my chat interface. Do not write any conversational text, introductions, or closing remarks outside of this code block.
-
-Structure the output as follows:
-
-# SESSION STATE EXPORT
-## 0. SESSION METADATA & CURRENT STATE SNAPSHOT
-[Active date, current year, primary subject, active model version — plus 3-5 lines: what this project is, what's actively being worked on, what's next]
-## 1. CLASS 3: GENERAL BACKGROUND, USER PROFILE & CHRONOLOGICAL HISTORICAL MILESTONES
-## 2. CLASS 2: MASTER IDENTIFIER REGISTRY (Verbatim, exact strings only)
-[A single deduplicated Markdown table covering the entire session: Exact String | Type (file/table/column/variable/measure/config) | Status ([ACTIVE] or [PROPOSED]) | First Mentioned / Context]
-## 3. CLASS 2: LOSSLESS DESCRIPTIVE DICTIONARY & SCHEMA CANDIDATES (tables: implemented vs. proposed)
-## 4. CLASS 2: SME DESIGN DEBATES & EXPERIMENTAL LOGIC (tables: tentative rules, columns under trial, caveats)
-## 5. CLASS 2: VERBATIM ETL STATE, DAX MEASURES, & MATHEMATICAL FORMULAS (wrapped in <verbatim_data> tags)
-## 6. CLASS 2: ACTIVE TESTING ASSUMPTIONS & PLACEHOLDERS
-## 7. CLASS 2: DASHBOARD FRONTEND & VISUAL LAYOUT SPECIFICATIONS
-## 8. CLASS 1: LOSSLESS ACTIVE WORKING MEMORY (last 3-5 turns, current dilemmas, active context)
-## 9. CONFIDENCE & GAPS
-## 10. CLASS 1: IMMEDIATE ROADMAP & UNRESOLVED QUEUE (confirmed next steps only)`
-        },
-        {
-            id: 'continue-module',
-            title: '2. Force Continue Output',
-            category: 'Moving Sessions',
-            description: 'Asks Gemini to output the next module block without conversational fillers.',
-            pinned: false,
-            text: 'Continue with Module 2. Start directly with the text. Do not write any conversational intro.'
-        },
-        {
-            id: 'resume-session',
-            title: '3. Paste Session State',
-            category: 'Moving Sessions',
-            description: 'Injects your generated state block and configures the new session environment.',
-            pinned: false,
-            text: `Resume session from this compressed state:
-{{State Block}}
-
-Acknowledge this state. In your very first reply:
-1. Write exactly one sentence stating the CURRENT active topic of discussion.
-2. Conduct a brief "Sanity Check": flag any conflicting database variables, incomplete logic models, or immediate dependencies — and explicitly address anything listed in the Confidence & Gaps section.
-3. Wait for my instructions. Do not generate any other work yet.`
-        },
-        {
-            id: 'adhd-tutor',
-            title: '4. Reader-Friendly Tutor (ADHD)',
-            category: 'Optimizing Responses',
-            description: 'Enforces high academic rigor optimized for high-focus scanning and readability.',
-            pinned: false,
-            text: `Act as my academic tutor. To accommodate my ADHD, apply the following cognitive, content-filtering, and structural rules to every response. Do not simplify the academic rigor, but optimize the delivery for high-focus scanning.
-
-COGNITIVE CONTENT-FILTERING (THE SKEPTICAL SELF-CHECK)
-Before outputting any response, run this mental check on your draft:
-1. "Would a subject-matter expert notice any mathematically or logically essential step missing if this response were any shorter?"
-   - If YES: Keep the step. Genuinely complex proofs must take the space they need.
-   - If NO: Delete the excess. Do not add warm-up lines, redundant restatements, or conversational padding just to seem thorough.
-
-THE INTERACTIVE LEVERS
-Adjust your depth dynamically based on the prefix I use in my message:
-- If I start my message with [QUICK]: Provide only the Bottom Line and the single most critical mathematical/logical point.
-- If I start my message with [DEEP] (or no prefix): Provide the full structural scaffolding below.
-
-STRUCTURAL SCANNING RULES
-1. THE BOTTOM LINE: Start with a bold "Bottom Line" summary. Limit to 1 sentence (maximum 2 if the topic has two distinct, load-bearing parts).
-2. CHUNKING & WHITE SPACE: Never write a paragraph longer than 3 sentences. Use double-line breaks between paragraphs. Do not fracture a single connected mathematical thought across a break just to hit this limit.
-3. BOLDING GUARDRAILS: Bold only the most critical terms, variables, or mathematical transitions. Limit bolding to 1 or 2 key terms per paragraph. If everything is bold, nothing is scannable.
-4. STEP-BY-STEP SCAFFOLDING: For derivations, proofs, or code, list steps as a numbered sequence. Keep formulas on their own lines. Under each step, provide a concise 1-sentence justification (2 sentences maximum, only if logically required).
-5. ZERO CONVERSATIONAL FILLER: Skip all introductory remarks and concluding pleasantries. Begin directly with the bold bottom line.`
-        },
-        {
-            id: 'brainstorming-engine',
-            title: '5. Creative Idea Generator',
-            category: 'Ideas & Planning',
-            description: 'Generates a highly diverse, structured, and lateral-thinking list of concepts.',
-            pinned: false,
-            text: `Act as an exhaustive, lateral-thinking brainstorming engine. I need a high-volume list of highly distinct, diverse, and unique ideas for the topic below.
-
-1. PLANNING PHASE (Category Map): Before generating any ideas, outline 5-8 genuinely different conceptual categories or thematic angles for this topic. Output this map first. Spread ideas across it roughly evenly as you generate — no single category should end up dominating the list, or the map isn't doing its job.
-
-2. QUANTITY TARGET: If I give you a specific number, treat it as a floor, not a ceiling — hit at least that many, and keep going past it if you're still generating genuinely fresh ideas. If I don't give you a number (or say "as many as you can"), keep generating until you'd have to start padding, repeating structural patterns, or stretching definitions just to keep counting as "distinct" — then stop, tell me you've hit that natural ceiling, and give a rough total. Never stop early just because the list already feels long.
-
-3. IF YOU RUN OUT OF ROOM BEFORE YOU RUN OUT OF IDEAS: stop at a clean point in the numbered list, write exactly "[CONTINUE FOR MORE IDEAS]," and wait. When I say "continue," resume numbering exactly where you left off.
-
-4. NO FORCED PADDING: If you genuinely run out of distinct ideas before any stated target, say so directly instead of generating near-duplicates dressed up as different. A shorter, fully genuine list beats a padded one.
-
-5. CONCISENESS: **Bold the idea name**, then 1-2 punchy sentences on its core mechanism or execution. Occasionally a genuinely unconventional idea needs a third sentence to actually land clearly — that's fine, don't force a cut that makes it confusing.
-
-6. PUSH PAST THE OBVIOUS: Don't front-load the list with deliberately weak ideas just to create the appearance of a ramp. Start with your genuinely best obvious ideas, but keep escalating into more unconventional, fringe, and counter-intuitive territory as the list goes on rather than plateauing once a few solid ideas land.
-
-7. NO DUPLICATE LOGIC: Each idea stands alone. If it's substantively the same mechanism as an earlier one with the wording changed, discard it and generate something structurally different instead.
-
-8. ZERO FILLER: No preamble ("Here are some great ideas...") and no closing commentary. Start directly with the Category Map, end when the list ends.
-
-Structure your output as:
-# CONCEPT CATEGORY MAP
-[5-8 categories]
-# EXHAUSTIVE IDEA LIST
-[Ideas grouped under their category, numbered sequentially across the whole list]
-
-Topic: {{Topic}}
-Target number of ideas: {{Target number of ideas}}`
-        },
-        {
-            id: 'adversarial-auditor',
-            title: '6. Ruthless Logic Critic',
-            category: 'Optimizing Responses',
-            description: 'Critiques a previous response like an independent, rigorous code and logic auditor.',
-            pinned: false,
-            text: `Review your previous response as an independent, adversarial auditor. Assume there's a real, non-trivial issue somewhere and your job is to find it — not to confirm the response is fine.
-
-If you're not confident you have the previous response's exact content in front of you (e.g. it's far back in a long conversation), say so and ask me to paste it again rather than auditing from a fuzzy reconstruction of it.
-
-Check for whichever of these apply to the content type:
-- Factual errors or unsupported claims
-- Logical inconsistencies, or steps that don't actually follow from what came before
-- Missing edge cases, exceptions, or boundary conditions
-- Internal contradictions (does it agree with itself throughout?)
-- Syntax, implementation, or execution bugs (for code or formulas)
-
-For each issue found: state what's wrong, why it's wrong, and tag its severity as [CRITICAL], [MINOR], or [STYLE]. If you genuinely find no significant errors, say so directly — don't manufacture minor nitpicks just to appear thorough. Real stylistic or clarity suggestions are still welcome, but keep them clearly separate from actual errors.
-
-Then provide the fix:
-- If only part of the response was flawed, give just the corrected replacement for that part, clearly labeled with what it replaces. Don't regenerate the whole thing if most of it was already correct.
-- If an error has ripple effects elsewhere in the response, say what else needs to change, even if you're not rewriting it in full.
-- If the damage is genuinely widespread, provide the full corrected version.`
-        },
-        {
-            id: 'systems-architect',
-            title: '7. Advanced Project Builder',
-            category: 'Ideas & Planning',
-            description: 'Generates optimized system layouts, trade-offs, edge cases, and robust implementations.',
-            pinned: false,
-            text: `Act as a Principal Systems Architect and Lead Technical Educator. I need an exceptionally optimized, highly accurate, and clearly structured response to the query at the bottom.
-
-Scale everything below to the query's real complexity. A trivial, well-established question doesn't need exhaustive edge-case hunting or a forced trade-off comparison — a one-line scratchpad and a short answer are correct for that case. A genuinely hard problem deserves the full depth. Every phase still happens, but how much space it takes should track what the query actually calls for, not a fixed target.
-
-## 1. PLANNING (shown as a condensed summary by default — see note at the end)
-- ASSUMPTIONS: your interpretation of the query and the relevant environment/context, briefly.
-- CONSTRAINTS: real mathematical, hardware, or software boundaries — only ones that actually apply here.
-- EDGE CASES: the genuine edge cases, security risks, or failure points that actually apply — zero, one, or several, whichever is true. Don't invent an extra one to hit a quota.
-- TRADE-OFFS: if there's a genuine choice between approaches, compare them and say which you're using and why. If there's really only one sensible approach, say so instead of manufacturing an alternative just to compare against.
-- If you're not confident about a specific technical claim, flag it as uncertain rather than stating it with unearned confidence. Accuracy matters more than looking exhaustive.
-
-## 2. DRAFT & SELF-CRITIQUE (condensed by default, same visibility rule as above)
-- BOTTLENECK: the weakest point of your first-pass solution.
-- REFINEMENT: how you're adjusting the final answer to address it.
-
-## 3. THE SOLUTION
-- Complete, verbatim code, formulas, or steps. No placeholders or TODOs.
-- Inline comments on non-obvious logic only, not every line.
-- Clean markdown, bolded key terms, structured headers.
-- If you're going to run out of output space, finish this section in full before anything else. Cut Section 4 short, or continue it in a follow-up message, rather than truncating the actual solution.
-
-## 4. EXPLANATION
-- Core logic in plain, non-jargon language — as many points as it actually takes, usually a few. Don't pad to a fixed count.
-- How I can quickly test or verify this works, if that's relevant to what I asked.
-- One or two maintainability warnings, only if there's a real one. Don't invent a tip just to fill the slot.
-
-Phases 1 and 2 exist to make your final answer better, not to be read in full every time. By default, compress each into a short reasoning summary (2-4 lines covering the key assumption, the real trade-off decision if any, and the main risk you're guarding against). If I say "show full reasoning," expand both phases into their complete form.
-
----
-QUERY TO PROCESS: {{Query To Process}}`
-        },
-        {
-            id: 'verify-reasoning',
-            title: '8. Smart Logic Filter (No Fluff)',
-            category: 'Optimizing Responses',
-            pinned: false,
-            description: 'Enforces mental verification, edge-case checks, adaptive output structure, and direct execution.',
-            text: `For your responses:
-1. REASONING & VERIFICATION: Take the time to actively verify your logic, check for edge cases or exceptions, and double-check your reasoning before answering. Do not state unverified assumptions with confidence — if you're genuinely uncertain about something that matters, say so, but don't hedge on things you're actually sure of.
-2. ADAPTIVE STRUCTURE: Tailor your presentation format dynamically to the specific goal of my query (e.g., clean modular code for building projects, intuitive frameworks for general suggestions, structured explanations for learning). Optimize for readability, scannability, and direct understandability without forcing a rigid or over-formal structure.
-3. ZERO FILLER: Skip conversational pleasantries at the start (like "Sure, I can help with that") and at the end (like "let me know if you have questions"). Start directly with your solution, or with a brief framing sentence only if it's strictly necessary to understand what follows.
-4. AMBIGUITY RESOLUTION: If my query is underspecified, make the most reasonable assumption, state it in one line, and proceed — only ask clarifying questions if guessing would genuinely go in the wrong direction.`
-        }
-    ];
+    let defaultPrompts = [];
 
     let prompts = [];
     let activeCategory = 'All';
 
     // Application Bootstrap (with auto-migration for existing users)
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const response = await fetch('shared/default-prompts.json');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const defaultData = await response.json();
+            const normalizedDefaults = PromptSchema.normalizePromptCollection(defaultData);
+            if (normalizedDefaults.issues.length) {
+                throw new Error('Default prompt data failed validation.');
+            }
+            defaultPrompts = normalizedDefaults.prompts;
+        } catch (error) {
+            document.getElementById('promptGrid').textContent =
+                'Unable to load the default prompt library. Please reload the page or verify the shared data files.';
+            showToast('Default prompt library could not be loaded.', 'danger');
+            return;
+        }
+
         const stored = localStorage.getItem('prompts');
         if (stored) {
-            prompts = JSON.parse(stored);
-            
-            // Auto-Migration: Detect and merge/overwrite core properties to match new simple names/categories
+            try {
+                const parsedStored = JSON.parse(stored);
+                const normalizedStored = PromptSchema.normalizePromptCollection(parsedStored);
+                prompts = normalizedStored.prompts;
+
+                if (normalizedStored.issues.length) {
+                    showToast(`${normalizedStored.issues.length} invalid saved prompt(s) were ignored.`, 'warning');
+                }
+            } catch (error) {
+                prompts = [];
+                showToast('Saved prompt data was unreadable; defaults were restored.', 'warning');
+            }
+
+            // Update canonical defaults by ID while preserving user prompts and pin state.
             let migrated = false;
             defaultPrompts.forEach(dp => {
                 const index = prompts.findIndex(p => p.id === dp.id);
                 if (index !== -1) {
-                    // Update metadata to new human-friendly categories and titles
-                    if (prompts[index].title !== dp.title || 
-                        prompts[index].category !== dp.category || 
-                        prompts[index].text !== dp.text || 
+                    if (prompts[index].title !== dp.title ||
+                        prompts[index].category !== dp.category ||
+                        prompts[index].text !== dp.text ||
                         prompts[index].description !== dp.description) {
-                        
-                        prompts[index].title = dp.title;
-                        prompts[index].category = dp.category;
-                        prompts[index].text = dp.text;
-                        prompts[index].description = dp.description;
+                        prompts[index] = { ...prompts[index], ...dp, pinned: prompts[index].pinned };
                         migrated = true;
                     }
                 } else {
-                    prompts.push(dp);
+                    prompts.push({ ...dp });
                     migrated = true;
                 }
             });
-            
-            if (migrated) {
-                localStorage.setItem('prompts', JSON.stringify(prompts));
-            }
+
+            if (migrated) localStorage.setItem('prompts', JSON.stringify(prompts));
         } else {
-            prompts = defaultPrompts;
+            prompts = defaultPrompts.map(prompt => ({ ...prompt }));
             localStorage.setItem('prompts', JSON.stringify(prompts));
         }
 
-        // Restore admin session state if verified previously in this window
         if (sessionStorage.getItem('isAdmin') === 'true') {
             document.body.classList.add('admin-mode');
             document.getElementById('adminToggleBtn').textContent = "Lock Admin";
         }
 
+        document.getElementById('promptGrid').addEventListener('click', handlePromptGridClick);
         renderCategories();
         renderPrompts();
     });
 
-    // Mobile Sidebar Drawer Actions
+    // Mobile Sidebar Drawer Actions    // Mobile Sidebar Drawer Actions
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
@@ -1098,45 +902,44 @@ QUERY TO PROCESS: {{Query To Process}}`
     function renderCategories() {
         const categories = [...new Set(prompts.map(p => p.category))];
         const container = document.getElementById('dynamicCategories');
-        
+
         document.getElementById('count-all').textContent = prompts.length;
-        
-        container.innerHTML = '';
+        container.replaceChildren();
+
         categories.forEach(cat => {
-            const count = prompts.filter(p => p.category === cat).length;
-            const activeClass = activeCategory === cat ? 'active' : '';
-            container.innerHTML += `
-                <div class="nav-item ${activeClass}" onclick="selectCategory('${cat}')" id="cat-${cat.replace(/\s+/g, '-')}">
-                    <span>${cat}</span>
-                    <span class="nav-counter">${count}</span>
-                </div>
-            `;
+            const item = document.createElement('div');
+            item.className = `nav-item${activeCategory === cat ? ' active' : ''}`;
+            item.id = `cat-${encodeURIComponent(cat)}`;
+            item.addEventListener('click', () => selectCategory(cat));
+
+            const name = document.createElement('span');
+            name.textContent = cat;
+
+            const counter = document.createElement('span');
+            counter.className = 'nav-counter';
+            counter.textContent = prompts.filter(p => p.category === cat).length;
+
+            item.append(name, counter);
+            container.appendChild(item);
         });
     }
 
     function selectCategory(cat) {
         activeCategory = cat;
-        
+
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        if (cat === 'All') {
-            document.getElementById('cat-all').classList.add('active');
-        } else {
-            const targetEl = document.getElementById(`cat-${cat.replace(/\s+/g, '-')}`);
-            if (targetEl) targetEl.classList.add('active');
-        }
-        
+        const targetId = cat === 'All' ? 'cat-all' : `cat-${encodeURIComponent(cat)}`;
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) targetEl.classList.add('active');
+
         const titleEl = document.getElementById('currentCategoryTitle');
         if (titleEl) titleEl.textContent = cat === 'All' ? 'All Prompts' : cat;
 
-        // Auto close side drawer on mobile when option is tapped
-        if (window.innerWidth <= 768) {
-            toggleSidebar();
-        }
-
+        if (window.innerWidth <= 768) toggleSidebar();
         renderPrompts();
     }
 
-    // Toggle Pin/Star Status
+    // Toggle Pin/Star Status    // Toggle Pin/Star Status
     function togglePin(id) {
         const index = prompts.findIndex(p => p.id === id);
         if (index !== -1) {
@@ -1148,59 +951,82 @@ QUERY TO PROCESS: {{Query To Process}}`
     }
 
     function extractPlaceholders(text) {
-        const regex = /\{\{([^}]+)\}\}/g;
-        const matches = [];
-        let match;
-        while ((match = regex.exec(text)) !== null) {
-            if (!matches.includes(match[1])) {
-                matches.push(match[1]);
-            }
+        return PromptTemplate.extractVariables(text);
+    }
+
+    function encodeDomKey(value) {
+        return encodeURIComponent(String(value));
+    }
+
+    function handlePromptGridClick(event) {
+        const actionTarget = event.target.closest('[data-prompt-action]');
+        if (!actionTarget || !event.currentTarget.contains(actionTarget)) return;
+
+        const id = decodeURIComponent(actionTarget.dataset.promptId);
+        switch (actionTarget.dataset.promptAction) {
+            case 'pin':
+                togglePin(id);
+                break;
+            case 'edit':
+                editPrompt(id);
+                break;
+            case 'delete':
+                deletePrompt(id);
+                break;
+            case 'copy':
+                copyPrompt(id, actionTarget);
+                break;
+            case 'preview':
+                togglePreview(id);
+                break;
         }
-        return matches;
     }
 
     // Abstract Card HTML generation to a single, maintainable engine
     // Added "admin-only" class wrapper to critical editing buttons
     function generateCardHtml(p) {
         const variables = extractPlaceholders(p.text);
+        const safeId = encodeDomKey(p.id);
         let variablesHtml = '';
 
         if (variables.length > 0) {
             variablesHtml = `
-                <div class="variables-section" id="vars-${p.id}">
-                    ${variables.map(v => `
-                        <div class="variable-group">
-                            <label>${v}</label>
-                            <textarea class="variable-input" data-key="${v}" placeholder="Enter values for ${v}..."></textarea>
-                        </div>
-                    `).join('')}
+                <div class="variables-section" id="vars-${safeId}">
+                    ${variables.map(variable => {
+                        const safeVariable = encodeURIComponent(variable);
+                        return `
+                            <div class="variable-group">
+                                <label>${escapeHtml(variable)}</label>
+                                <textarea class="variable-input" data-key="${safeVariable}" placeholder="Enter values for ${escapeHtml(variable)}..."></textarea>
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
             `;
         }
 
         return `
-            <div class="prompt-card" data-id="${p.id}">
+            <div class="prompt-card" data-id="${safeId}">
                 <div class="card-top">
                     <div class="card-info">
                         <div class="card-meta">
-                            <span class="card-category">${p.category}</span>
+                            <span class="card-category">${escapeHtml(p.category)}</span>
                             ${p.pinned ? `<span style="font-size: 11px; color: var(--warning); font-weight: 600; display:flex; align-items:center; gap:2px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Starred</span>` : ''}
                         </div>
-                        <h3 class="card-title">${p.title}</h3>
-                        <p class="card-description">${p.description}</p>
+                        <h3 class="card-title">${escapeHtml(p.title)}</h3>
+                        <p class="card-description">${escapeHtml(p.description)}</p>
                     </div>
                     <div class="card-actions">
-                        <!-- Toggle Pin Action (Locked for Admin only) -->
-                        <button class="btn-icon admin-only ${p.pinned ? 'active' : ''}" onclick="togglePin('${p.id}')" title="Star/Pin Prompt">
+                        <button class="btn-icon admin-only ${p.pinned ? 'active' : ''}" data-prompt-action="pin" data-prompt-id="${safeId}" title="Star/Pin Prompt">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                         </button>
-                        <button class="btn-icon admin-only" onclick="editPrompt('${p.id}')" title="Edit Prompt">
+                        <button class="btn-icon admin-only" data-prompt-action="edit" data-prompt-id="${safeId}" title="Edit Prompt">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
-                        <button class="btn-icon admin-only" onclick="deletePrompt('${p.id}')" title="Delete Prompt" style="color: var(--danger);">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <button class="btn-icon admin-only" data-prompt-action="delete" data-prompt-id="${safeId}" title="Delete Prompt" style="color: var(--danger);">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2h-14a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
-                        <button class="btn-copy" onclick="copyPrompt('${p.id}', this)">
+                        <button class="btn-copy" data-prompt-action="copy" data-prompt-id="${safeId}">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             Copy Prompt
                         </button>
@@ -1210,11 +1036,11 @@ QUERY TO PROCESS: {{Query To Process}}`
                 ${variablesHtml}
 
                 <div class="preview-drawer">
-                    <div class="preview-header" onclick="togglePreview('${p.id}')">
+                    <div class="preview-header" data-prompt-action="preview" data-prompt-id="${safeId}">
                         <span>PROMPT VIEW / PREVIEW</span>
-                        <span id="preview-arrow-${p.id}">▼</span>
+                        <span id="preview-arrow-${safeId}">▼</span>
                     </div>
-                    <div class="preview-body" id="preview-body-${p.id}">${escapeHtml(p.text)}</div>
+                    <div class="preview-body" id="preview-body-${safeId}">${escapeHtml(p.text)}</div>
                 </div>
             </div>
         `;
@@ -1302,8 +1128,9 @@ QUERY TO PROCESS: {{Query To Process}}`
     }
 
     function togglePreview(id) {
-        const body = document.getElementById(`preview-body-${id}`);
-        const arrow = document.getElementById(`preview-arrow-${id}`);
+        const safeId = encodeDomKey(id);
+        const body = document.getElementById(`preview-body-${safeId}`);
+        const arrow = document.getElementById(`preview-arrow-${safeId}`);
         body.classList.toggle('open');
         arrow.textContent = body.classList.contains('open') ? '▲' : '▼';
     }
@@ -1312,27 +1139,29 @@ QUERY TO PROCESS: {{Query To Process}}`
         const prompt = prompts.find(p => p.id === id);
         if (!prompt) return;
 
-        let finalPrompt = prompt.text;
-        const variablesCard = document.getElementById(`vars-${id}`);
-
+        const values = {};
+        const variablesCard = document.getElementById(`vars-${encodeDomKey(id)}`);
         if (variablesCard) {
-            const inputs = variablesCard.querySelectorAll('.variable-input');
-            inputs.forEach(input => {
-                const key = input.dataset.key;
-                const value = input.value.trim();
-                finalPrompt = finalPrompt.replaceAll(`{{${key}}}`, value);
+            variablesCard.querySelectorAll('.variable-input').forEach(input => {
+                values[decodeURIComponent(input.dataset.key)] = input.value;
             });
         }
 
+        const rendered = PromptTemplate.substituteVariables(prompt.text, values);
+        if (rendered.unfilled.length) {
+            showToast(`Fill in: ${rendered.unfilled.join(', ')}.`, 'warning');
+            return;
+        }
+
         try {
-            await navigator.clipboard.writeText(finalPrompt);
+            await navigator.clipboard.writeText(rendered.text);
             showToast("Copied to clipboard!");
         } catch (err) {
             showToast("Clipboard write access blocked", "danger");
         }
     }
 
-    // Security Engine (SHA-256 computation in pure client JS)
+    // Security Engine (SHA-256 computation in pure client JS)    // Security Engine (SHA-256 computation in pure client JS)
     async function sha256(message) {
         const msgBuffer = new TextEncoder().encode(message);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -1410,6 +1239,12 @@ QUERY TO PROCESS: {{Query To Process}}`
             return;
         }
 
+        const variableAnalysis = PromptTemplate.analyzeVariables(text);
+        if (variableAnalysis.emptyPlaceholders.length) {
+            showToast("Variable names cannot be empty.", "warning");
+            return;
+        }
+
         if (id) {
             const index = prompts.findIndex(p => p.id === id);
             prompts[index] = { ...prompts[index], title, category, description, text };
@@ -1442,17 +1277,23 @@ QUERY TO PROCESS: {{Query To Process}}`
 
     // JSON Synchronizer Backup & Import Utility
     function exportData() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(prompts, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", "prompt_manager_backup.json");
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        showToast("Backup file downloaded!");
+        try {
+            const envelope = PromptTransfer.createExportEnvelope(prompts);
+            const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.href = url;
+            downloadAnchor.download = 'prompt_manager_backup.json';
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            URL.revokeObjectURL(url);
+            showToast("Backup file downloaded!");
+        } catch (error) {
+            showToast(error.message, "danger");
+        }
     }
 
-    // Manual Reset Function for safety / troubleshooting
     function clearStorageAndReset() {
         if (confirm("Are you sure you want to reset your prompts list back to default? All of your custom modifications will be lost.")) {
             localStorage.removeItem('prompts');
@@ -1466,27 +1307,42 @@ QUERY TO PROCESS: {{Query To Process}}`
 
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                const importedPrompts = JSON.parse(e.target.result);
-                if (Array.isArray(importedPrompts)) {
-                    if (confirm("Proceed to import and merge these templates?")) {
-                        const existingIds = new Set(prompts.map(p => p.id));
-                        importedPrompts.forEach(p => {
-                            if (!existingIds.has(p.id)) {
-                                prompts.push(p);
-                            }
-                        });
-                        localStorage.setItem('prompts', JSON.stringify(prompts));
-                        renderCategories();
-                        renderPrompts();
-                        showToast("Import merge completed!");
-                    }
-                } else {
-                    showToast("Invalid JSON schema.", "danger");
-                }
-            } catch (err) {
-                showToast("Read process failed.", "danger");
+            const imported = PromptTransfer.parseImportText(e.target.result);
+            input.value = '';
+
+            if (imported.fatalError) {
+                showToast(imported.fatalError, "danger");
+                return;
             }
+
+            if (!imported.prompts.length) {
+                const message = imported.issues.length
+                    ? `No valid prompts found; ${imported.issues.length} malformed record(s) rejected.`
+                    : 'No prompts found in backup.';
+                showToast(message, "danger");
+                return;
+            }
+
+            const issueNote = imported.issues.length
+                ? ` ${imported.issues.length} malformed record(s) will be skipped.`
+                : '';
+
+            if (!confirm(`Import ${imported.prompts.length} valid prompt(s)?${issueNote}`)) return;
+
+            const merged = PromptTransfer.mergePromptCollections(prompts, imported.prompts);
+            prompts = merged.prompts;
+            localStorage.setItem('prompts', JSON.stringify(prompts));
+            renderCategories();
+            renderPrompts();
+
+            const details = [];
+            if (imported.issues.length) details.push(`${imported.issues.length} malformed rejected`);
+            if (merged.conflicts.length) details.push(`${merged.conflicts.length} existing ID conflict(s) skipped`);
+            showToast(`Imported ${merged.added.length} prompt(s)${details.length ? '; ' + details.join(', ') : ''}.`, details.length ? 'warning' : 'success');
+        };
+        reader.onerror = function() {
+            input.value = '';
+            showToast("Read process failed.", "danger");
         };
         reader.readAsText(file);
     }
@@ -1503,3 +1359,4 @@ QUERY TO PROCESS: {{Query To Process}}`
 
 </body>
 </html>
+
