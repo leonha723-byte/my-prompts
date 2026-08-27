@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Prompt Workspace Launcher",
+  "version": "1.0.0",
+  "description": "Search, complete, and insert prompts from Prompt Workspace.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "action": {
+    "default_title": "Open Prompt Workspace",
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+P",
+        "mac": "Command+Shift+P"
+      },
+      "description": "Open Prompt Workspace"
+    }
+  }
+}
+
