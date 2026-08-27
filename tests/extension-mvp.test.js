@@ -105,6 +105,26 @@ test('library reloads stored prompts and prioritizes pinned search results', asy
     assert.deepEqual(Array.from(filtered, item => item.id), ['b', 'a']);
 });
 
+test('pin updates are persisted transactionally without mutating the current library', async () => {
+    const { ExtensionLibrary } = createLibraryContext();
+    const prompts = [prompt()];
+    const storage = fakeStorage({ promptLibraryV1: prompts });
+    const updated = await ExtensionLibrary.setPromptPinned(storage, prompts, 'one', true);
+
+    assert.equal(prompts[0].pinned, false);
+    assert.equal(updated[0].pinned, true);
+    assert.equal(storage.values.promptLibraryV1[0].pinned, true);
+
+    const failingStorage = {
+        async set() { throw new Error('quota'); }
+    };
+    await assert.rejects(
+        ExtensionLibrary.setPromptPinned(failingStorage, prompts, 'one', true),
+        /quota/
+    );
+    assert.equal(prompts[0].pinned, false);
+});
+
 test('library groups prompts into sorted category paths with nested-category support', () => {
     const { ExtensionLibrary } = createLibraryContext();
     const tree = ExtensionLibrary.buildCategoryTree([
@@ -288,5 +308,6 @@ test('popup scripts parse and render user values through DOM APIs', () => {
     }
     assert.doesNotMatch(read('extension/popup.js'), /innerHTML\s*=/);
 });
+
 
 
