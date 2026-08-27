@@ -30,6 +30,18 @@
         return normalized.prompts;
     }
 
+    async function setPromptPinned(storageArea, prompts, id, pinned) {
+        let found = false;
+        const updated = prompts.map(prompt => {
+            if (prompt.id !== id) return prompt;
+            found = true;
+            return { ...prompt, pinned: pinned === true };
+        });
+
+        if (!found) throw new Error('The selected prompt no longer exists.');
+        return saveLibrary(storageArea, updated);
+    }
+
     function filterPrompts(prompts, query, category) {
         const normalizedQuery = String(query || '').trim().toLowerCase();
         const selectedCategory = category || 'All';
@@ -111,6 +123,7 @@
         STORAGE_KEY,
         loadLibrary,
         saveLibrary,
+        setPromptPinned,
         filterPrompts,
         buildCategoryTree,
         categoryPaths,
@@ -118,4 +131,5 @@
         importLibrary
     });
 })(window);
+
 
