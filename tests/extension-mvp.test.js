@@ -105,6 +105,51 @@ test('library reloads stored prompts and prioritizes pinned search results', asy
     assert.deepEqual(Array.from(filtered, item => item.id), ['b', 'a']);
 });
 
+test('library groups prompts into sorted category paths with nested-category support', () => {
+    const { ExtensionLibrary } = createLibraryContext();
+    const tree = ExtensionLibrary.buildCategoryTree([
+        prompt({ id: 'ee', title: 'Circuits', category: 'Learning/EE' }),
+        prompt({ id: 'math', title: 'Algebra', category: 'Learning/Math' }),
+        prompt({ id: 'work', title: 'Review', category: 'Work' })
+    ]);
+
+    assert.deepEqual(Array.from(tree, node => node.name), ['Learning', 'Work']);
+    assert.equal(tree[0].path, 'Learning');
+    assert.deepEqual(Array.from(tree[0].children, node => node.path), ['Learning/EE', 'Learning/Math']);
+    assert.equal(tree[0].children[0].prompts[0].id, 'ee');
+    assert.deepEqual(Array.from(ExtensionLibrary.categoryPaths([
+        prompt({ category: 'Learning/EE' }),
+        prompt({ id: 'two', category: 'Work' })
+    ])), ['Learning', 'Learning/EE', 'Work']);
+});
+
+test('category expansion state is respected except while searching', () => {
+    const { ExtensionLibrary } = createLibraryContext();
+    const expanded = new Set(['Work']);
+
+    assert.equal(ExtensionLibrary.isCategoryExpanded('Work', expanded, ''), true);
+    assert.equal(ExtensionLibrary.isCategoryExpanded('Learning', expanded, ''), false);
+    assert.equal(ExtensionLibrary.isCategoryExpanded('Learning', expanded, 'circuit'), true);
+    assert.equal(ExtensionLibrary.isCategoryExpanded('Learning', expanded, '   '), false);
+});
+
+test('search reveals matching grouped prompts and favorites remain prioritized', () => {
+    const { ExtensionLibrary } = createLibraryContext();
+    const prompts = [
+        prompt({ id: 'ordinary', title: 'Circuit Notes', category: 'Learning/EE' }),
+        prompt({ id: 'favorite', title: 'Circuit Tutor', category: 'Learning/EE', pinned: true }),
+        prompt({ id: 'other', title: 'Meeting Notes', category: 'Work' })
+    ];
+    const matches = ExtensionLibrary.filterPrompts(prompts, 'circuit', 'All');
+    const tree = ExtensionLibrary.buildCategoryTree(matches);
+
+    assert.deepEqual(Array.from(matches, item => item.id), ['favorite', 'ordinary']);
+    assert.equal(tree.length, 1);
+    assert.equal(tree[0].path, 'Learning');
+    assert.equal(tree[0].children[0].path, 'Learning/EE');
+    assert.deepEqual(Array.from(matches.filter(item => item.pinned), item => item.id), ['favorite']);
+});
+
 test('extension imports legacy and versioned backups while preserving conflicts', () => {
     const { ExtensionLibrary, PromptTransfer } = createLibraryContext();
     const existing = [prompt()];
@@ -243,4 +288,5 @@ test('popup scripts parse and render user values through DOM APIs', () => {
     }
     assert.doesNotMatch(read('extension/popup.js'), /innerHTML\s*=/);
 });
+
 
