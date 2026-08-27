@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Extension popup smoke fixture</title>
+    <link rel="stylesheet" href="../../extension/popup.css">
+</head>
+<body>
+    <header><div><h1>Prompt Workspace</h1><p>Smoke fixture</p></div><button id="pinButton" type="button">☆</button></header>
+    <section class="filters">
+        <input id="searchInput" type="search" placeholder="Search prompts...">
+        <select id="categorySelect" aria-label="Filter by category"></select>
+    </section>
+    <main>
+        <section class="library"><div id="promptList" class="prompt-list"></div><p id="emptyState" hidden>No prompts found.</p></section>
+        <section id="promptDetail" class="detail" hidden>
+            <span id="detailCategory"></span><h2 id="detailTitle"></h2><p id="detailDescription"></p>
+            <div id="variableFields"></div><pre id="promptPreview"></pre><p id="missingWarning" hidden></p>
+            <button id="insertButton" type="button">Insert</button><button id="copyButton" type="button">Copy</button>
+        </section>
+    </main>
+    <footer><input id="importFile" type="file"><button id="exportButton" type="button">Export</button><span id="libraryCount"></span></footer>
+    <div id="status" role="status"></div>
+    <script>
+        const smokeStorage = {};
+        const smokeFetch = window.fetch.bind(window);
+        window.fetch = url => smokeFetch(url === 'shared/default-prompts.json'
+            ? '../../extension/shared/default-prompts.json'
+            : url);
+        window.chrome = {
+            storage: { local: {
+                async get(key) { return { [key]: smokeStorage[key] }; },
+                async set(update) { Object.assign(smokeStorage, JSON.parse(JSON.stringify(update))); }
+            } },
+            tabs: { async query() { return [{ id: 1 }]; } },
+            scripting: { async executeScript() { return [{ result: { ok: false, reason: 'Fixture fallback.' } }]; } }
+        };
+    </script>
+    <script src="../../extension/shared/prompt-schema.js"></script>
+    <script src="../../extension/shared/prompt-template.js"></script>
+    <script src="../../extension/shared/prompt-transfer.js"></script>
+    <script src="../../extension/library.js"></script>
+    <script src="../../extension/insertion.js"></script>
+    <script src="../../extension/popup.js"></script>
+</body>
+</html>
+
