@@ -134,3 +134,14 @@ test('default prompt JSON is valid, normalized, and has unique IDs', () => {
     assert.equal(new Set(defaults.map(item => item.id)).size, defaults.length);
 });
 
+test('index defines ID encoding and delegates prompt actions without inline IDs', () => {
+    const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const encoderPosition = index.indexOf('function encodeDomKey(value)');
+    const rendererPosition = index.indexOf('function generateCardHtml(p)');
+
+    assert.ok(encoderPosition >= 0, 'encodeDomKey must be defined');
+    assert.ok(encoderPosition < rendererPosition, 'encodeDomKey must be defined before rendering');
+    assert.match(index, /data-prompt-action="copy" data-prompt-id="\$\{safeId\}"/);
+    assert.doesNotMatch(index, /onclick="[^"]*decodeURIComponent/);
+});
+
