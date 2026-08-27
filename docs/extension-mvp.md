@@ -1,134 +1,130 @@
-# Browser extension MVP
+# Browser extension MVP v1
 
-## Goal
+## Scope
 
-Provide a fast prompt launcher for Chrome and Edge that searches the same prompt
-library, collects template variables, and inserts or copies the completed prompt.
-The website remains the full prompt manager; the MVP does not add accounts,
-cloud synchronization, or automatic submission.
+`extension/` is a dependency-free Chrome/Edge Manifest V3 prompt launcher. It
+searches a local prompt library, collects `{{Variable}}` values, previews the
+completed prompt, and inserts it into the active editor. It never submits.
+
+The MVP targets ChatGPT, Google AI Studio, and generic editable fields through
+one generic insertion engine. No site-specific adapter is included because the
+generic path has not yet demonstrated a target-specific failure.
 
 ## Architecture
 
-Use a Manifest V3 extension under a future `extension/` directory:
-
 ```text
 extension/
-  manifest.json
-  popup.html
-  popup.css
-  popup.js
-  service-worker.js
-  insertion.js
-  adapters/
-    chatgpt.js
-    claude.js
-    ai-studio.js
-    generic.js
+  manifest.json              Manifest V3 action and keyboard command
+  popup.html                 Launcher UI
+  popup.css                  Self-contained popup styling
+  popup.js                   UI state, variables, import/export, insert/copy
+  library.js                 Storage, search, sort, and merge operations
+  insertion.js               Injected generic editor insertion function
+  shared/                    Checked copies of the website prompt core/data
 ```
 
-Copy or package the existing dependency-free files from `shared/` into the
-extension artifact. `prompt-schema.js`, `prompt-template.js`, and
-`prompt-transfer.js` remain the common data contract; avoid duplicating their
-logic in popup code.
+The extension directory must be independently loadable, so browser-packaged
+code cannot import files above its root. Tests require every `extension/shared/`
+file to exactly match its canonical website counterpart and fail on drift.
 
-## Manifest permissions
+There is no service worker. The reserved `_execute_action` command opens the
+toolbar popup directly, which is smaller and more reliable than maintaining a
+background process solely for keyboard launching.
 
-Start with only:
+## Permissions
 
-```json
-{
-  "permissions": ["activeTab", "scripting", "storage", "commands"]
-}
-```
+| Permission | Purpose |
+|---|---|
+| `activeTab` | Grants temporary access only after the user opens the launcher. |
+| `scripting` | Runs the insertion function in the current tab after **Insert**. |
+| `storage` | Persists the extension prompt library and pinned state locally. |
 
-`activeTab` limits page access to an explicit user invocation. Do not request
-`<all_urls>`, clipboard-read, browsing-history, or remote-code permissions.
-Writing through the active page and offering a normal copy fallback are enough
-for the MVP.
+There are no host permissions and no `<all_urls>`. The extension has no backend,
+remote code, accounts, OAuth, analytics, or network transmission.
 
-## Popup and library UI
+## Popup workflow
 
-The toolbar popup and keyboard command should open the same compact interface:
+1. Load the canonical eight defaults on first run.
+2. Search title, description, category, and prompt content.
+3. Filter by category; pinned prompts sort first, followed by title.
+4. Select a prompt and render normalized variable inputs.
+5. Update a text-only completed preview as values change.
+6. Block Insert/Copy while required variables remain unfilled.
+7. Insert into the active page or copy as a fallback.
 
-1. Search title, description, category, and prompt text.
-2. Filter by category and show pinned prompts first.
-3. Select a prompt and render fields for its normalized `{{variables}}`.
-4. Warn about unfilled variables.
-5. Offer **Insert** and **Copy** actions.
+All user-controlled values are rendered through DOM text APIs. No prompt values
+or IDs are interpolated into executable code or `innerHTML`.
 
-Editing remains on the website in the first release. The popup may support
-pinning because that is local presentation state, but it should not duplicate
-the website's create/edit/delete UI yet.
+## Storage and compatibility
 
-## Storage and migration
+- Storage key: `promptLibraryV1` in `chrome.storage.local`.
+- Records retain `id`, `title`, `category`, `description`, `text`, and `pinned`.
+- Legacy website bare arrays and version-1 envelopes are accepted.
+- Invalid records are skipped by the shared validator.
+- Existing-ID conflicts keep the extension record and report the skipped count.
+- Exports use the same version-1 envelope as the website.
+- Website and extension sync is manual import/export only.
 
-- Store the extension library in `chrome.storage.local`, not page
-  `localStorage`.
-- Seed it from canonical `shared/default-prompts.json` on first run.
-- Persist the schema version separately from UI preferences.
-- Import both legacy bare arrays and version-1 envelopes through
-  `PromptTransfer.parseImportText`.
-- Export the same versioned envelope as the website.
-- Preserve prompt IDs so website and extension backups round-trip cleanly.
-- When bundled defaults change, apply the website's ID-based migration policy
-  while preserving extension pin state and user-created prompts.
+## Generic insertion
 
-A later release may add an explicit externally-connectable website bridge, but
-the MVP should synchronize through import/export files only. This avoids a
-fixed extension-ID contract and cross-origin messaging complexity.
+The injected function:
 
-## Insertion strategy
+1. Prefers the currently focused visible editor.
+2. Otherwise scores visible textarea, text/search input, and contenteditable
+   candidates using editor semantics and viewport position.
+3. Inserts at the selection/caret when available.
+4. Uses the native value setter plus a bubbling `input` event for controlled
+   textarea/input implementations.
+5. Uses `execCommand('insertText')` for contenteditable undo/event compatibility,
+   with a Range fallback.
+6. Returns a structured result to the popup.
 
-Run insertion only after the user presses **Insert**:
+It never invokes `submit`, `requestSubmit`, Send buttons, keyboard Enter, or an
+equivalent action. If no supported editor is available or page injection is
+blocked, the completed prompt is copied instead.
 
-1. Use a small hostname adapter for ChatGPT, Claude, or Gemini AI Studio.
-2. Fall back to the currently focused visible `textarea`, text input, or
-   `contenteditable` element.
-3. Set the value at the current selection and dispatch input events expected by
-   controlled editors.
-4. If insertion fails, copy the rendered prompt and show a clear message.
+## Installation and use
 
-Adapters should use semantic editor properties and minimal selectors. They must
-not click Send or submit a form automatically.
+See the repository `README.md` for exact Chrome and Edge unpacked-install steps,
+import instructions, shortcut configuration, and manual ChatGPT/AI Studio tests.
 
-## Security boundaries
+## Acceptance checklist
 
-- Treat prompt files and stored prompts as untrusted data.
-- Validate every import before storage and render text with DOM APIs or escaped
-  text nodes.
-- Never interpolate prompt IDs or content into executable JavaScript.
-- Keep all code packaged with the extension; Manifest V3 forbids remote code.
-- Do not read page content beyond locating the target editor.
-- Do not transmit prompts, variables, browsing data, or page content to a
-  server.
-- The website's client-side admin passcode is a UI lock, not authentication and
-  should not be copied into the extension.
+- [x] Manifest V3 package with no host permissions
+- [x] Toolbar popup and `_execute_action` shortcut
+- [x] Eight-default initialization and `chrome.storage.local` persistence
+- [x] Search, categories, pinned-first sorting, and pin persistence
+- [x] Variable extraction, missing-value warning, and completed preview
+- [x] Legacy/versioned import and versioned export
+- [x] Textarea, text-input, and contenteditable insertion
+- [x] Bubbling input notification for modern controlled inputs
+- [x] Clipboard fallback
+- [x] No automatic submission path
+- [x] Automated manifest/core/storage/import/insertion/security tests
+- [x] HTTP browser fixture smoke test with zero console errors
+- [ ] Manual unpacked-popup verification in current Chrome and Edge
+- [ ] Manual live ChatGPT and Google AI Studio verification
 
-## MVP acceptance criteria
+## Known limitations
 
-- Installs unpacked in current Chrome and Edge.
-- Opens by toolbar button and configured keyboard shortcut.
-- Loads all canonical defaults and preserves imported/user prompts after restart.
-- Search, category filtering, pin ordering, variables, import, and export match
-  website behavior.
-- Inserts into verified ChatGPT, Claude, and AI Studio composers.
-- Inserts into a generic textarea and contenteditable test page.
-- Falls back to Copy without losing the rendered prompt.
-- Never auto-submits and requests no broad host access.
-- Malformed imports, duplicate IDs, empty variables, and unfilled variables are
-  handled consistently with the shared tests.
+- The browser popup closes when focus leaves it; variable inputs are intentionally
+  session-local and are not restored after closing.
+- Generic editor scoring may choose the wrong field on pages containing several
+  visible editors. Focus the target composer before opening the launcher.
+- Browser-internal pages, extension stores, and other restricted URLs block
+  script injection; Copy fallback is used.
+- Clipboard APIs can be restricted by browser policy. The popup also attempts a
+  user-gesture `execCommand('copy')` fallback.
+- ChatGPT and AI Studio DOM changes may eventually require thin adapters, but
+  adapters should be added only after a reproducible generic failure.
+- The default keyboard shortcut can conflict with browser/OS commands and may
+  need reassignment on the browser's extension-shortcuts page.
 
-## Staged implementation
+## Next stages
 
-1. Scaffold the Manifest V3 popup and load the shared library from
-   `chrome.storage.local`.
-2. Implement search, categories, pins, variable rendering, and copy.
-3. Implement generic focused-element insertion and event dispatch.
-4. Add and regression-test the three thin site adapters.
-5. Add legacy/versioned import and versioned export.
-6. Test unpacked builds in Chrome and Edge, document known editor limitations,
-   then prepare store assets and privacy disclosures.
-
-Do not add cloud sync or a website messaging bridge until the file-based MVP is
-stable and its permission model has been reviewed.
+1. Complete the two manual acceptance items above.
+2. Add a site adapter only for a documented failing editor behavior.
+3. Add extension icons and store metadata after behavior stabilizes.
+4. Consider an explicit website-extension messaging bridge only after file-based
+   synchronization proves insufficient.
 
