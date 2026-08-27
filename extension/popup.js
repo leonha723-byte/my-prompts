@@ -6,7 +6,8 @@
         selectedId: null,
         query: '',
         category: 'All',
-        values: {}
+        values: {},
+        expandedCategories: new Set()
     };
 
     const elements = {};
@@ -44,6 +45,7 @@
                 return response.json();
             });
             state.prompts = loaded.prompts;
+            ExtensionLibrary.categoryPaths(state.prompts).forEach(path => state.expandedCategories.add(path));
             renderCategories();
             renderLibrary();
             setStatus(loaded.source === 'defaults' ? 'Default prompt library loaded.' : 'Prompt library loaded.', 'success');
@@ -86,28 +88,100 @@
         elements.empty.hidden = visible.length > 0;
         elements.count.textContent = `${state.prompts.length} prompts`;
 
-        visible.forEach(prompt => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = `prompt-item${prompt.id === state.selectedId ? ' selected' : ''}`;
-            button.title = prompt.description || prompt.title;
-            button.addEventListener('click', () => selectPrompt(prompt.id));
+        const favorites = visible.filter(prompt => prompt.pinned);
+        if (favorites.length) {
+            const section = document.createElement('section');
+            section.className = 'tree-section favorites';
+            section.setAttribute('aria-label', 'Favorites');
+            const heading = document.createElement('div');
+            heading.className = 'tree-section-heading';
+            heading.textContent = '★ Favorites';
+            section.appendChild(heading);
+            favorites.forEach(prompt => section.appendChild(createPromptButton(prompt, 1)));
+            elements.list.appendChild(section);
+        }
 
-            if (prompt.pinned) {
-                const star = document.createElement('span');
-                star.className = 'star';
-                star.textContent = '★';
-                star.setAttribute('aria-label', 'Pinned');
-                button.appendChild(star);
-            }
-            button.appendChild(document.createTextNode(prompt.title));
-            elements.list.appendChild(button);
-        });
+        const tree = ExtensionLibrary.buildCategoryTree(visible);
+        tree.forEach(node => elements.list.appendChild(renderCategoryNode(node, 0)));
 
         if (state.selectedId && !state.prompts.some(prompt => prompt.id === state.selectedId)) {
             state.selectedId = null;
             elements.detail.hidden = true;
         }
+    }
+
+    function renderCategoryNode(node, depth) {
+        const section = document.createElement('section');
+        section.className = 'tree-node';
+        const expanded = ExtensionLibrary.isCategoryExpanded(
+            node.path,
+            state.expandedCategories,
+            state.query
+        );
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'tree-toggle';
+        toggle.style.setProperty('--tree-depth', depth);
+        toggle.setAttribute('aria-expanded', String(expanded));
+        toggle.title = expanded ? `Collapse ${node.path}` : `Expand ${node.path}`;
+
+        const disclosure = document.createElement('span');
+        disclosure.className = 'disclosure';
+        disclosure.textContent = expanded ? '▾' : '▸';
+        const folder = document.createElement('span');
+        folder.className = 'folder';
+        folder.textContent = '▰';
+        const label = document.createElement('span');
+        label.className = 'tree-label';
+        label.textContent = node.name;
+        const count = document.createElement('span');
+        count.className = 'tree-count';
+        count.textContent = String(countNodePrompts(node));
+        toggle.append(disclosure, folder, label, count);
+        toggle.addEventListener('click', () => {
+            if (state.expandedCategories.has(node.path)) {
+                state.expandedCategories.delete(node.path);
+            } else {
+                state.expandedCategories.add(node.path);
+            }
+            renderLibrary();
+        });
+        section.appendChild(toggle);
+
+        if (expanded) {
+            const children = document.createElement('div');
+            children.className = 'tree-children';
+            node.prompts.forEach(prompt => children.appendChild(createPromptButton(prompt, depth + 1)));
+            node.children.forEach(child => children.appendChild(renderCategoryNode(child, depth + 1)));
+            section.appendChild(children);
+        }
+        return section;
+    }
+
+    function countNodePrompts(node) {
+        return node.prompts.length + node.children.reduce(
+            (total, child) => total + countNodePrompts(child),
+            0
+        );
+    }
+
+    function createPromptButton(prompt, depth) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `prompt-item${prompt.id === state.selectedId ? ' selected' : ''}`;
+        button.style.setProperty('--tree-depth', depth);
+        button.title = prompt.description || prompt.title;
+        button.addEventListener('click', () => selectPrompt(prompt.id));
+
+        if (prompt.pinned) {
+            const star = document.createElement('span');
+            star.className = 'star';
+            star.textContent = '★';
+            star.setAttribute('aria-label', 'Pinned');
+            button.appendChild(star);
+        }
+        button.appendChild(document.createTextNode(prompt.title));
+        return button;
     }
 
     function selectPrompt(id) {
@@ -251,6 +325,7 @@
             const result = ExtensionLibrary.importLibrary(await file.text(), state.prompts);
             if (result.fatalError) throw new Error(result.fatalError);
             state.prompts = await ExtensionLibrary.saveLibrary(chrome.storage.local, result.prompts);
+            ExtensionLibrary.categoryPaths(state.prompts).forEach(path => state.expandedCategories.add(path));
             renderCategories();
             renderLibrary();
             const details = [];
@@ -283,4 +358,5 @@
         elements.status.className = `status ${type || ''}`;
     }
 })();
+
 
