@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prompt Workspace</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Prompt Workspace</h1>
+            <p>Search, complete, and insert</p>
+        </div>
+        <button id="pinButton" class="icon-button" type="button" title="Pin selected prompt" aria-label="Pin selected prompt">☆</button>
+    </header>
+
+    <section class="filters" aria-label="Prompt filters">
+        <input id="searchInput" type="search" placeholder="Search prompts..." autocomplete="off" autofocus>
+        <select id="categorySelect" aria-label="Filter by category"></select>
+    </section>
+
+    <main>
+        <section class="library" aria-label="Prompt library">
+            <div id="promptList" class="prompt-list"></div>
+            <p id="emptyState" class="empty-state" hidden>No prompts found.</p>
+        </section>
+
+        <section id="promptDetail" class="detail" hidden>
+            <div class="detail-heading">
+                <span id="detailCategory" class="category"></span>
+                <h2 id="detailTitle"></h2>
+                <p id="detailDescription"></p>
+            </div>
+
+            <div id="variableFields" class="variables"></div>
+
+            <label class="preview-label" for="promptPreview">Completed prompt</label>
+            <pre id="promptPreview" class="preview" tabindex="0"></pre>
+            <p id="missingWarning" class="warning" hidden></p>
+
+            <div class="primary-actions">
+                <button id="insertButton" class="primary" type="button">Insert</button>
+                <button id="copyButton" type="button">Copy</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <label class="file-button" for="importFile">Import</label>
+        <input id="importFile" type="file" accept=".json,application/json" hidden>
+        <button id="exportButton" type="button">Export</button>
+        <span id="libraryCount" class="count"></span>
+    </footer>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+
+    <script src="shared/prompt-schema.js"></script>
+    <script src="shared/prompt-template.js"></script>
+    <script src="shared/prompt-transfer.js"></script>
+    <script src="library.js"></script>
+    <script src="insertion.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>
+
