@@ -1,0 +1,5 @@
+.dotnet-cli/
+artifacts/
+**/bin/
+**/obj/
+*.user
