@@ -12,7 +12,8 @@ public sealed class DesktopInsertion : IClipboardWriter, ITargetWindow, IPasteSe
 
     public bool TryCopy(string text, out string? error)
     {
-        for (var attempt = 0; attempt < 4; attempt++)
+        const int attempts = 8;
+        for (var attempt = 0; attempt < attempts; attempt++)
         {
             try
             {
@@ -20,7 +21,16 @@ public sealed class DesktopInsertion : IClipboardWriter, ITargetWindow, IPasteSe
                 error = null;
                 return true;
             }
-            catch (COMException) when (attempt < 3) { Thread.Sleep(40 * (attempt + 1)); }
+            catch (COMException ex)
+            {
+                if (attempt == attempts - 1)
+                {
+                    LauncherLog.Write("Clipboard remained unavailable after retries.", ex);
+                    error = "The clipboard is busy. Try Insert again or use Copy only.";
+                    return false;
+                }
+                Thread.Sleep(50 * (attempt + 1));
+            }
         }
         error = "The clipboard is busy. Try Copy again.";
         return false;
@@ -37,6 +47,8 @@ public sealed class DesktopInsertion : IClipboardWriter, ITargetWindow, IPasteSe
     {
         var inputs = CreatePasteInputs();
         var sent = SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>());
+        if (sent != inputs.Length)
+            LauncherLog.Write($"SendInput sent {sent} of {inputs.Length} events. Win32 error: {Marshal.GetLastWin32Error()}.");
         return sent == inputs.Length;
     }
 
@@ -55,7 +67,21 @@ public sealed class DesktopInsertion : IClipboardWriter, ITargetWindow, IPasteSe
     };
 
     [StructLayout(LayoutKind.Sequential)] private struct INPUT { public uint type; public InputUnion U; }
-    [StructLayout(LayoutKind.Explicit)] private struct InputUnion { [FieldOffset(0)] public KEYBDINPUT ki; }
+    [StructLayout(LayoutKind.Explicit)] private struct InputUnion
+    {
+        [FieldOffset(0)] public MOUSEINPUT mi;
+        [FieldOffset(0)] public KEYBDINPUT ki;
+        [FieldOffset(0)] public HARDWAREINPUT hi;
+    }
+    [StructLayout(LayoutKind.Sequential)] private struct MOUSEINPUT
+    {
+        public int dx;
+        public int dy;
+        public uint mouseData;
+        public uint dwFlags;
+        public uint time;
+        public nuint dwExtraInfo;
+    }
     [StructLayout(LayoutKind.Sequential)] private struct KEYBDINPUT
     {
         public ushort wVk;
@@ -63,6 +89,12 @@ public sealed class DesktopInsertion : IClipboardWriter, ITargetWindow, IPasteSe
         public uint dwFlags;
         public uint time;
         public nuint dwExtraInfo;
+    }
+    [StructLayout(LayoutKind.Sequential)] private struct HARDWAREINPUT
+    {
+        public uint uMsg;
+        public ushort wParamL;
+        public ushort wParamH;
     }
 
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();

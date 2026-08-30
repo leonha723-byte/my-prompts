@@ -210,10 +210,19 @@ public partial class MainWindow : Window
     private async void Insert_Click(object sender, RoutedEventArgs e)
     {
         if (!TryGetCompletedText(out var text)) return;
-        Hide();
-        var result = await insertion.InsertAsync(text, targetWindow);
-        SetStatus(result.Message, !result.Pasted);
-        if (!result.Pasted) ShowLauncher();
+        try
+        {
+            Hide();
+            var result = await insertion.InsertAsync(text, targetWindow);
+            SetStatus(result.Message, !result.Pasted);
+            if (!result.Pasted) ShowLauncher();
+        }
+        catch (Exception ex)
+        {
+            LauncherLog.Write("Unexpected failure during insertion.", ex);
+            SetStatus($"Insertion failed safely. The launcher is still running. Diagnostic log: {LauncherLog.LogPath}", true);
+            ShowLauncher();
+        }
     }
 
     private bool TryGetCompletedText(out string text)

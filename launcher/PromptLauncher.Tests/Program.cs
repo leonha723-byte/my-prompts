@@ -112,6 +112,11 @@ static async Task TestPasteCoordinator()
     fake.ClipboardWorks = false;
     var failed = await service.InsertAsync("fail", 42, 0);
     True(!failed.Pasted && !failed.Copied);
+
+    fake.ThrowClipboardException = true;
+    var exceptionFallback = await service.InsertAsync("exception", 42, 0);
+    True(!exceptionFallback.Pasted && !exceptionFallback.Copied);
+    True(exceptionFallback.Message.Contains("clipboard", StringComparison.OrdinalIgnoreCase));
 }
 
 static PromptRecord Prompt(string id) => new(id, "Prompt", "Testing", "Description", "Hello {{Name}}", false);
@@ -124,9 +129,16 @@ sealed class FakeDesktop : IClipboardWriter, ITargetWindow, IPasteSender
 {
     public bool ClipboardWorks { get; set; } = true;
     public bool CanActivate { get; set; } = true;
+    public bool ThrowClipboardException { get; set; }
     public string? CopiedText { get; private set; }
     public int PasteCount { get; private set; }
-    public bool TryWrite(string text, out string? error) { CopiedText = text; error = ClipboardWorks ? null : "busy"; return ClipboardWorks; }
+    public bool TryWrite(string text, out string? error)
+    {
+        if (ThrowClipboardException) throw new InvalidOperationException("locked");
+        CopiedText = text;
+        error = ClipboardWorks ? null : "busy";
+        return ClipboardWorks;
+    }
     public bool IsAvailable(nint handle) => handle == 42;
     public bool TryActivate(nint handle) => CanActivate;
     public bool TrySendPaste() { PasteCount++; return true; }

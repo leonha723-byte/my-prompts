@@ -43,6 +43,10 @@ Local state is stored in `%LocalAppData%\PromptWorkspaceLauncher`:
 No administrator access is required. The only OS facilities used are the
 current-user clipboard and standard User32 hotkey/focus/keyboard APIs.
 
+Only one launcher process may run per Windows user session. A second launch
+shows an already-running message and exits, preventing concurrent writes to the
+prompt and settings files.
+
 ## Desktop insertion
 
 When the global shortcut fires, the launcher records the current foreground
@@ -58,6 +62,11 @@ It never synthesizes Enter, clicks a send control, invokes application-specific
 APIs, or uses UI Automation. If the target is gone, focus restoration fails, or
 the complete paste sequence cannot be sent, the prompt remains on the clipboard
 and the launcher reopens with a copy-only fallback message.
+
+Clipboard access is retried when another application temporarily owns it.
+Unexpected insertion failures are caught so the tray process remains alive and
+are recorded in
+`%LocalAppData%\PromptWorkspaceLauncher\launcher.log`.
 
 ## Build and run
 

@@ -22,8 +22,15 @@ public sealed class PasteCoordinator(IClipboardWriter clipboard, ITargetWindow w
 {
     public async Task<DesktopInsertResult> InsertAsync(string text, nint targetWindow, int activationDelayMs = 100)
     {
-        if (!clipboard.TryWrite(text, out var error))
-            return new(false, false, error ?? "The clipboard could not be updated.");
+        try
+        {
+            if (!clipboard.TryWrite(text, out var error))
+                return new(false, false, error ?? "The clipboard could not be updated.");
+        }
+        catch (Exception ex)
+        {
+            return new(false, false, $"The clipboard could not be updated: {ex.Message}");
+        }
         if (targetWindow == 0 || !windows.IsAvailable(targetWindow))
             return new(false, true, "Copied. The previous application is no longer available; paste manually.");
         if (!windows.TryActivate(targetWindow))
