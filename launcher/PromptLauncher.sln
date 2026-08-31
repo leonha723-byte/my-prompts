@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PromptLauncher.Core", "PromptLauncher.Core\PromptLauncher.Core.csproj", "{7D23237F-8568-43E0-A367-4962A0272281}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PromptLauncher", "PromptLauncher\PromptLauncher.csproj", "{97567A0D-A3D1-437B-88E7-2B46AF357953}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PromptLauncher.Tests", "PromptLauncher.Tests\PromptLauncher.Tests.csproj", "{E6C77B37-827A-4FE4-A9B3-11B43CB431B0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7D23237F-8568-43E0-A367-4962A0272281}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D23237F-8568-43E0-A367-4962A0272281}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D23237F-8568-43E0-A367-4962A0272281}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D23237F-8568-43E0-A367-4962A0272281}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97567A0D-A3D1-437B-88E7-2B46AF357953}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97567A0D-A3D1-437B-88E7-2B46AF357953}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97567A0D-A3D1-437B-88E7-2B46AF357953}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97567A0D-A3D1-437B-88E7-2B46AF357953}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6C77B37-827A-4FE4-A9B3-11B43CB431B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6C77B37-827A-4FE4-A9B3-11B43CB431B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6C77B37-827A-4FE4-A9B3-11B43CB431B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6C77B37-827A-4FE4-A9B3-11B43CB431B0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

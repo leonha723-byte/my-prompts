@@ -90,4 +90,32 @@ IDs are retained; ID conflicts keep the extension's existing prompt.
 Repeat in ChatGPT and Google AI Studio. See `docs/extension-mvp.md` for the full
 architecture, security boundaries, acceptance checklist, and known limitations.
 
+## Windows desktop launcher MVP
+
+The Windows launcher is in `launcher/`. It is a lightweight native WPF app that
+uses the same prompt schema, variable rules, and version-1/legacy JSON formats as
+the website and extension. It registers a configurable global shortcut, keeps a
+searchable nested-category library in local storage, and inserts through a
+clipboard plus focus-and-`Ctrl+V` strategy. It never sends Enter.
+
+Build and run on Windows with the .NET 10 SDK:
+
+```powershell
+dotnet build launcher\PromptLauncher.sln --configuration Release
+dotnet run --project launcher\PromptLauncher\PromptLauncher.csproj --configuration Release
+```
+
+Run its dependency-free automated tests:
+
+```powershell
+dotnet run --project launcher\PromptLauncher.Tests\PromptLauncher.Tests.csproj --configuration Release
+```
+
+See `docs/windows-launcher-mvp.md` for architecture, publishing instructions,
+permissions, insertion behavior, manual ChatGPT acceptance tests, and known
+limitations.
+
+For a Windows x64 test package that does not require .NET on the destination,
+use the checked-in `WinX64SelfContained` publish profile documented there.
+
 
