@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Windows build and tests
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      - name: Build Windows launcher
+        run: dotnet build launcher\PromptLauncher.sln --configuration Release
+
+      - name: Run launcher tests
+        run: dotnet run --project launcher\PromptLauncher.Tests\PromptLauncher.Tests.csproj --configuration Release --no-build
+
+      - name: Run website and extension tests
+        run: node --test tests\prompt-core.test.js tests\extension-mvp.test.js
