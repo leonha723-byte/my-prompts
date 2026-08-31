@@ -92,16 +92,25 @@ Framework-dependent (smallest output; destination needs .NET 10 Desktop Runtime)
 dotnet publish launcher\PromptLauncher\PromptLauncher.csproj -c Release -r win-x64 --self-contained false -o artifacts\launcher-win-x64
 ```
 
-Self-contained (larger output; destination needs no .NET installation):
+Self-contained bundled build (destination needs no .NET installation):
 
 ```powershell
-dotnet publish launcher\PromptLauncher\PromptLauncher.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o artifacts\launcher-win-x64-self-contained
+dotnet publish launcher\PromptLauncher\PromptLauncher.csproj -p:PublishProfile=WinX64SelfContained -o artifacts\launcher-win-x64-self-contained
 ```
 
-Copy the chosen output directory to the destination and run
+The profile bundles the launcher's managed assemblies inside the executable so
+Smart App Control does not evaluate a separate unsigned application DLL. Keep
+the generated `Assets` directory beside `PromptWorkspaceLauncher.exe`; it
+contains the canonical default prompts. Do not enable
+`IncludeAllContentForSelfExtract`, because that would extract the managed
+launcher assembly to a temporary directory where application-control policy may
+block it.
+
+Copy the entire chosen output directory to the destination and run
 `PromptWorkspaceLauncher.exe`. V1 intentionally does not include an installer,
-auto-update mechanism, or startup registration. A Start-menu or Startup-folder
-shortcut can be created manually if desired.
+auto-update mechanism, startup registration, or production code-signing
+certificate. A Start-menu or Startup-folder shortcut can be created manually if
+desired.
 
 ## Automated tests
 

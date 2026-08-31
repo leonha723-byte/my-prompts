@@ -115,4 +115,7 @@ See `docs/windows-launcher-mvp.md` for architecture, publishing instructions,
 permissions, insertion behavior, manual ChatGPT acceptance tests, and known
 limitations.
 
+For a Windows x64 test package that does not require .NET on the destination,
+use the checked-in `WinX64SelfContained` publish profile documented there.
+
 
