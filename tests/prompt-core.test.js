@@ -129,8 +129,8 @@ test('default prompt JSON is valid, normalized, and has unique IDs', () => {
     const defaults = JSON.parse(fs.readFileSync(path.join(root, 'shared/default-prompts.json'), 'utf8'));
     const result = PromptSchema.normalizePromptCollection(defaults);
 
-    assert.equal(defaults.length, 9);
-    assert.equal(result.prompts.length, 9);
+    assert.equal(defaults.length, 11);
+    assert.equal(result.prompts.length, 11);
     assert.equal(result.issues.length, 0);
     assert.equal(new Set(defaults.map(item => item.id)).size, defaults.length);
 });
@@ -146,7 +146,9 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
         ['resume-session', 'PASTE SESSION STATE', '367348470f6a054ddc0f3b3c5b80731d58c6425296347e502e7b3c01dcd69fc4', ['Paste Session State Here']],
         ['verify-reasoning', 'SMART LOGIC FILTER', '829f92bea9440f8614c06fd39b11960d6e7b83bf4239c03224a33f6d330b1f0f', []],
         ['continue-module', 'FORCE CONTINUE OUTPUT', 'a10a435c6ec3c9292efcfade9e3923bdc885cd288497ebd25fd4164570db1e36', []],
-        ['general-response-instructions', 'GENERAL RESPONSE INSTRUCTIONS', '16e3dad54ebd2aee090b1ca694877df51a77aa500dcf3deef4a74ba9cb0b2d95', []]
+        ['general-response-instructions', 'GENERAL RESPONSE INSTRUCTIONS', '88248e7ed4bd8909fa20677fecdcee54f9ee7375146c2695cf0b4a49a231961c', []],
+        ['notebooklm-lecture-record', 'NOTEBOOKLM — LECTURE RECORD', 'cef6df81a69deb3fbe70d8a044f960aa5526ecfb284c9e134a8975ac01bd3dc1', []],
+        ['notebooklm-target-study-context', 'NOTEBOOKLM — TARGET STUDY CONTEXT', '5ba9d97a1a648d1db6d952f43f1dc6a9cf80e4075d7ba7e27f47311d08e8a10f', ['Target']]
     ];
 
     assert.deepEqual(defaults.map(item => [item.id, item.title]), expected.map(item => item.slice(0, 2)));
@@ -169,6 +171,8 @@ test('canonical long-form prompts survive versioned export and import unchanged'
     );
     assert.match(defaults[0].text, /<verbatim_data type="\.\.\.\">/);
     assert.match(defaults[5].text, /\[UNRESOLVED CONFLICT\]/);
+    assert.match(defaults[9].text, /\[UNCERTAIN TRANSCRIPTION\]/);
+    assert.match(defaults[9].text, /\[MISSING VISUAL CONTEXT\]/);
 });
 
 test('index defines ID encoding and delegates prompt actions without inline IDs', () => {
