@@ -175,6 +175,17 @@ test('canonical long-form prompts survive versioned export and import unchanged'
     assert.match(defaults[9].text, /\[MISSING VISUAL CONTEXT\]/);
 });
 
+test('launcher always packages the current canonical default library', () => {
+    const project = fs.readFileSync(
+        path.join(root, 'launcher/PromptLauncher/PromptLauncher.csproj'),
+        'utf8'
+    );
+
+    assert.match(project, /<Content Include="\.\.\\\.\.\\shared\\default-prompts\.json" Link="Assets\\default-prompts\.json">/);
+    assert.match(project, /<CopyToOutputDirectory>Always<\/CopyToOutputDirectory>/);
+    assert.match(project, /<CopyToPublishDirectory>Always<\/CopyToPublishDirectory>/);
+});
+
 test('index defines ID encoding and delegates prompt actions without inline IDs', () => {
     const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
     const encoderPosition = index.indexOf('function encodeDomKey(value)');
