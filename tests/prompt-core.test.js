@@ -146,9 +146,9 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
         ['resume-session', 'PASTE SESSION STATE', '367348470f6a054ddc0f3b3c5b80731d58c6425296347e502e7b3c01dcd69fc4', ['Paste Session State Here']],
         ['verify-reasoning', 'SMART LOGIC FILTER', '829f92bea9440f8614c06fd39b11960d6e7b83bf4239c03224a33f6d330b1f0f', []],
         ['continue-module', 'FORCE CONTINUE OUTPUT', 'a10a435c6ec3c9292efcfade9e3923bdc885cd288497ebd25fd4164570db1e36', []],
-        ['general-response-instructions', 'GENERAL RESPONSE INSTRUCTIONS', '88248e7ed4bd8909fa20677fecdcee54f9ee7375146c2695cf0b4a49a231961c', []],
-        ['notebooklm-lecture-record', 'NOTEBOOKLM — LECTURE RECORD', 'cef6df81a69deb3fbe70d8a044f960aa5526ecfb284c9e134a8975ac01bd3dc1', []],
-        ['notebooklm-target-study-context', 'NOTEBOOKLM — TARGET STUDY CONTEXT', '5ba9d97a1a648d1db6d952f43f1dc6a9cf80e4075d7ba7e27f47311d08e8a10f', ['Target']]
+        ['general-response-instructions', 'GENERAL RESPONSE INSTRUCTIONS', '1446e2791605b9034f8573173261fcb27b003a760e799b1ad2eb1a7f264b92bd', []],
+        ['notebooklm-lecture-record', 'NOTEBOOKLM — LECTURE RECORD', '55de428c15c8fb1397f218fc1349b0e44e2d1a35927105c640f34aec9dcbf57d', []],
+        ['notebooklm-target-study-context', 'NOTEBOOKLM — TARGET STUDY CONTEXT', 'fb6f579d611a8135aa254acd7912856a513973fcb302cc93dbde25ec4f7d8f22', ['Target']]
     ];
 
     assert.deepEqual(defaults.map(item => [item.id, item.title]), expected.map(item => item.slice(0, 2)));
@@ -173,6 +173,11 @@ test('canonical long-form prompts survive versioned export and import unchanged'
     assert.match(defaults[5].text, /\[UNRESOLVED CONFLICT\]/);
     assert.match(defaults[9].text, /\[UNCERTAIN TRANSCRIPTION\]/);
     assert.match(defaults[9].text, /\[MISSING VISUAL CONTEXT\]/);
+    assert.ok(defaults[9].text.includes('($...$)'));
+    assert.ok(defaults[10].text.includes('"--- \r\nSYSTEM PROMPT FOR PRACTICE GENERATION:'));
+    const completed = PromptTemplate.substituteVariables(defaults[10].text, { Target: 'Exam 1' });
+    assert.equal(completed.text, defaults[10].text.replace('{{Target}}', 'Exam 1'));
+    assert.equal(completed.unfilled.length, 0);
 });
 
 test('launcher always packages the current canonical default library', () => {
