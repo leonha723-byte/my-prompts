@@ -129,8 +129,8 @@ test('default prompt JSON is valid, normalized, and has unique IDs', () => {
     const defaults = JSON.parse(fs.readFileSync(path.join(root, 'shared/default-prompts.json'), 'utf8'));
     const result = PromptSchema.normalizePromptCollection(defaults);
 
-    assert.equal(defaults.length, 11);
-    assert.equal(result.prompts.length, 11);
+    assert.equal(defaults.length, 13);
+    assert.equal(result.prompts.length, 13);
     assert.equal(result.issues.length, 0);
     assert.equal(new Set(defaults.map(item => item.id)).size, defaults.length);
 });
@@ -148,7 +148,9 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
         ['continue-module', 'FORCE CONTINUE OUTPUT', 'c011f0c80b82bd5ae93cd0d7c44b03ab0fbff5c5b01053550b3eeae752f4530e', []],
         ['general-response-instructions', 'GENERAL RESPONSE INSTRUCTIONS', 'cf2680465cf61e6225ca4b5ba2a5d385acdad339ed2f2289782e9efd96b0af3f', []],
         ['notebooklm-lecture-record', 'NOTEBOOKLM — LECTURE RECORD', 'c9c22fb3bbd37c2a7942cab6e66e02be8625caf78062eefa732e50da15550c10', []],
-        ['notebooklm-target-study-context', 'NOTEBOOKLM — TARGET STUDY CONTEXT', 'd8305465ef33e0631c2bab4222bfd013a0122b561d0d8e436d05820c200f5422', ['Target']]
+        ['notebooklm-target-study-context', 'NOTEBOOKLM — TARGET STUDY CONTEXT', 'd8305465ef33e0631c2bab4222bfd013a0122b561d0d8e436d05820c200f5422', ['Target']],
+        ['gemini-task-handoff', 'GEMINI — TASK HANDOFF', '73ccdcf155da1f37ff9ed684f1dec8f75ad4766faf4aa74d09a546ba3b7b5e82', []],
+        ['chatgpt-review-gemini-output', 'CHATGPT — REVIEW GEMINI OUTPUT', 'f5ffe6dc61c9cf292e0c9d25e92a779a2c7480db0a13979c4c3855614b317bbe', ['Gemini Output']]
     ];
 
     assert.deepEqual(defaults.map(item => [item.id, item.title]), expected.map(item => item.slice(0, 2)));
@@ -156,6 +158,12 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
         assert.equal(crypto.createHash('sha256').update(item.text).digest('hex'), expected[index][2]);
         assert.deepEqual(Array.from(PromptTemplate.extractVariables(item.text)), expected[index][3]);
     });
+    assert.equal(defaults[9].category, 'NotebookLM & Gemini');
+    assert.equal(defaults[10].category, 'NotebookLM & Gemini');
+    assert.equal(defaults[11].category, 'NotebookLM & Gemini');
+    assert.equal(defaults[12].category, 'NotebookLM & Gemini');
+    assert.equal(PromptTemplate.extractVariables(defaults[11].text).length, 0);
+    assert.deepEqual(Array.from(PromptTemplate.extractVariables(defaults[12].text)), ['Gemini Output']);
 });
 
 test('canonical long-form prompts survive versioned export and import unchanged', () => {
