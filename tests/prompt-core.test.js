@@ -142,7 +142,7 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
         ['adversarial-auditor', 'RUTHLESS LOGIC CRITIC', 'd28bc6100c4cc88cf35c0c984fda96dd98c58a9f72966d76f97599eb5faaae20', []],
         ['systems-architect', 'ADVANCED PROJECT BUILDER', 'eb6321d5d7658e0187082639780b99aa2bd74ff806458f41f64bc70bb68a473d', ['Query To Process']],
         ['brainstorming-engine', 'CREATIVE IDEA GENERATOR', '826661c7cd9c66373767f7b2e7c92d72ebd33d784f12ea1ecb5319104794355d', ['Query To Process']],
-        ['adhd-tutor', 'READER-FRIENDLY TUTOR', 'a5b8f1870dda240dc31823730a1d77ceee867bb609a0ad764a612204eeca3fd8', []],
+        ['adhd-tutor', 'READER-FRIENDLY TUTOR', '24ff25cc80284f9cad7888d2ac12a945bcd6b18316ddfc089a7a0e1148fa7ace', []],
         ['resume-session', 'PASTE SESSION STATE', '3a65b4e43ccded43bbaf46c68ef433e44a12086f6c0af737cbc3902269ab95f9', ['Paste Session State Here']],
         ['verify-reasoning', 'SMART LOGIC FILTER', '1aef156d3d692110f261b78bc20e18952d6a854371168faac36fad1a51fb6f9c', []],
         ['continue-module', 'FORCE CONTINUE OUTPUT', 'c011f0c80b82bd5ae93cd0d7c44b03ab0fbff5c5b01053550b3eeae752f4530e', []],
