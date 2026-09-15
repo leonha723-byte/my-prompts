@@ -148,7 +148,7 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
         ['continue-module', 'FORCE CONTINUE OUTPUT', 'c011f0c80b82bd5ae93cd0d7c44b03ab0fbff5c5b01053550b3eeae752f4530e', []],
         ['general-response-instructions', 'GENERAL RESPONSE INSTRUCTIONS', 'cf2680465cf61e6225ca4b5ba2a5d385acdad339ed2f2289782e9efd96b0af3f', []],
         ['notebooklm-lecture-record', 'NOTEBOOKLM — LECTURE RECORD', 'c9c22fb3bbd37c2a7942cab6e66e02be8625caf78062eefa732e50da15550c10', []],
-        ['notebooklm-target-study-context', 'NOTEBOOKLM — TARGET STUDY CONTEXT', 'd8305465ef33e0631c2bab4222bfd013a0122b561d0d8e436d05820c200f5422', ['Target']],
+        ['notebooklm-target-study-context', 'NOTEBOOKLM — TARGET STUDY CONTEXT', 'ce4b5154b3555c8e78e53a4943b1ca58087556eeea09950c8d56786b6d5e332a', ['Target', 'Allowed Materials']],
         ['gemini-task-handoff', 'GEMINI — TASK HANDOFF', '73ccdcf155da1f37ff9ed684f1dec8f75ad4766faf4aa74d09a546ba3b7b5e82', []],
         ['chatgpt-review-gemini-output', 'CHATGPT — REVIEW GEMINI OUTPUT', 'f5ffe6dc61c9cf292e0c9d25e92a779a2c7480db0a13979c4c3855614b317bbe', ['Gemini Output']]
     ];
@@ -187,11 +187,20 @@ test('canonical long-form prompts survive versioned export and import unchanged'
     assert.match(defaults[9].text, /\[MISSING VISUAL CONTEXT\]/);
     assert.match(defaults[9].text, /\[OMITTED OR INCOMPLETE DERIVATION\]/);
     assert.ok(defaults[9].text.includes('($...$)'));
-    assert.match(defaults[10].text, /Keep practice generation separate/);
-    assert.doesNotMatch(defaults[10].text, /SYSTEM PROMPT FOR PRACTICE GENERATION/);
+    assert.match(defaults[10].text, /Task Calibration: Filter strictly for the specified task type and allowed materials/);
+    assert.match(defaults[10].text, /Formula Validity Limits: For every formula/);
     assert.equal((defaults[10].text.match(/\{\{\s*Target\s*\}\}/g) || []).length, 1);
-    const completed = PromptTemplate.substituteVariables(defaults[10].text, { Target: 'Exam 1' });
-    assert.equal(completed.text, defaults[10].text.split('{{Target}}').join('Exam 1'));
+    assert.equal((defaults[10].text.match(/\{\{\s*Allowed Materials\s*\}\}/g) || []).length, 1);
+    const completed = PromptTemplate.substituteVariables(defaults[10].text, {
+        Target: 'Exam 1',
+        'Allowed Materials': 'One-page formula sheet'
+    });
+    assert.equal(
+        completed.text,
+        defaults[10].text
+            .split('{{Target}}').join('Exam 1')
+            .split('{{Allowed Materials}}').join('One-page formula sheet')
+    );
     assert.equal(completed.unfilled.length, 0);
 });
 
