@@ -87,8 +87,8 @@ test('library initializes defaults in chrome.storage.local', async () => {
     const result = await ExtensionLibrary.loadLibrary(storage, async () => defaults);
 
     assert.equal(result.source, 'defaults');
-    assert.equal(result.prompts.length, 13);
-    assert.equal(storage.values.promptLibraryV1.length, 13);
+    assert.equal(result.prompts.length, 14);
+    assert.equal(storage.values.promptLibraryV1.length, 14);
 });
 
 test('library reloads stored prompts and prioritizes pinned search results', async () => {
