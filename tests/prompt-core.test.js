@@ -129,8 +129,8 @@ test('default prompt JSON is valid, normalized, and has unique IDs', () => {
     const defaults = JSON.parse(fs.readFileSync(path.join(root, 'shared/default-prompts.json'), 'utf8'));
     const result = PromptSchema.normalizePromptCollection(defaults);
 
-    assert.equal(defaults.length, 14);
-    assert.equal(result.prompts.length, 14);
+    assert.equal(defaults.length, 16);
+    assert.equal(result.prompts.length, 16);
     assert.equal(result.issues.length, 0);
     assert.equal(new Set(defaults.map(item => item.id)).size, defaults.length);
 });
@@ -151,7 +151,9 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
         ['notebooklm-target-study-context', 'NOTEBOOKLM — TARGET STUDY CONTEXT', '70652f94e8b7d9caa0f991b8dea190564fc6e7c9e007463d4e240f6662f9ca4b', ['Target']],
         ['gemini-task-handoff', 'GEMINI — TASK HANDOFF', '73ccdcf155da1f37ff9ed684f1dec8f75ad4766faf4aa74d09a546ba3b7b5e82', []],
         ['chatgpt-review-gemini-output', 'CHATGPT — REVIEW GEMINI OUTPUT', 'f5ffe6dc61c9cf292e0c9d25e92a779a2c7480db0a13979c4c3855614b317bbe', ['Gemini Output']],
-        ['deep-review-refine', 'DEEP REVIEW & REFINE', 'dc78ddfb7055730b07ca34fa2fb91bc9f8b226c9722df4287f340794d40f7adf', []]
+        ['deep-review-refine', 'DEEP REVIEW & REFINE', 'dc78ddfb7055730b07ca34fa2fb91bc9f8b226c9722df4287f340794d40f7adf', []],
+        ['latex-exam-study-guide', 'EXAM STUDY GUIDE — LATEX PDF', 'f3773f5d6a510b381f3ff9cf58fc155606ca1bdf78884ef45eff32398d9e7a3b', ['Course', 'Assessment', 'Scope', 'Course Materials / Context', 'Additional Requirements']],
+        ['focused-context-transfer', 'FOCUSED CONTEXT TRANSFER', '7de9103e486d78490adf021168c5d48b1a1651ffe9daebb4902a5ab70fdd8a00', ['Target']]
     ];
 
     assert.deepEqual(defaults.map(item => [item.id, item.title]), expected.map(item => item.slice(0, 2)));
@@ -168,6 +170,37 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
     assert.equal(defaults.filter(item => item.id === 'deep-review-refine').length, 1);
     assert.equal(defaults[13].category, defaults[8].category);
     assert.deepEqual(Array.from(PromptTemplate.extractVariables(defaults[13].text)), []);
+    assert.equal(defaults[14].category, 'Study');
+    assert.equal(defaults[15].category, defaults[0].category);
+});
+
+test('study and focused-transfer substitutions preserve literal syntax and complete content', () => {
+    const defaults = JSON.parse(fs.readFileSync(path.join(root, 'shared/default-prompts.json'), 'utf8'));
+    const study = defaults.find(item => item.id === 'latex-exam-study-guide');
+    const transfer = defaults.find(item => item.id === 'focused-context-transfer');
+    const values = {
+        Course: 'Circuits', Assessment: 'Quiz 2', Scope: 'RC circuits',
+        'Course Materials / Context': 'Use \\frac{V}{R} and \\begin{document}.',
+        'Additional Requirements': 'Include diagrams'
+    };
+    let expected = study.text;
+    for (const [name, value] of Object.entries(values)) expected = expected.split('{{' + name + '}}').join(value);
+    const completed = PromptTemplate.substituteVariables(study.text, values);
+    assert.equal(completed.text, expected);
+    assert.equal(completed.unfilled.length, 0);
+    assert.ok(completed.text.includes('\\end{document}'));
+    assert.deepEqual(Array.from(PromptTemplate.extractVariables(completed.text)), []);
+    const focused = PromptTemplate.substituteVariables(transfer.text, { Target: 'RC circuit project' });
+    assert.equal(focused.text, transfer.text.replace('{{Target}}', 'RC circuit project'));
+    assert.equal(focused.unfilled.length, 0);
+    assert.ok(focused.text.includes('<verbatim_data type="...">'));
+    assert.ok(focused.text.includes('[UNRESOLVED CONFLICT]'));
+    assert.deepEqual(Array.from(PromptTemplate.extractVariables(focused.text)), []);
+    for (const item of [study, transfer]) {
+        const imported = PromptTransfer.parseImportText(JSON.stringify([item]));
+        assert.equal(imported.fatalError, null);
+        assert.deepEqual(JSON.parse(JSON.stringify(imported.prompts)), [item]);
+    }
 });
 
 test('canonical long-form prompts survive versioned export and import unchanged', () => {
