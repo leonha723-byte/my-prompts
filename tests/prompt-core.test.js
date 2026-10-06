@@ -152,7 +152,7 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
         ['gemini-task-handoff', 'GEMINI — TASK HANDOFF', '73ccdcf155da1f37ff9ed684f1dec8f75ad4766faf4aa74d09a546ba3b7b5e82', []],
         ['chatgpt-review-gemini-output', 'CHATGPT — REVIEW GEMINI OUTPUT', 'f5ffe6dc61c9cf292e0c9d25e92a779a2c7480db0a13979c4c3855614b317bbe', ['Gemini Output']],
         ['deep-review-refine', 'DEEP REVIEW & REFINE', 'dc78ddfb7055730b07ca34fa2fb91bc9f8b226c9722df4287f340794d40f7adf', []],
-        ['latex-exam-study-guide', 'EXAM STUDY GUIDE — LATEX PDF', 'f3773f5d6a510b381f3ff9cf58fc155606ca1bdf78884ef45eff32398d9e7a3b', ['Course', 'Assessment', 'Scope', 'Course Materials / Context', 'Additional Requirements']],
+        ['latex-exam-study-guide', 'EXAM STUDY GUIDE — LATEX PDF', '86b3fe85449f969b877e529ea59d61aeb2ced6305b0fb635a501ab6dd901b1c0', []],
         ['focused-context-transfer', 'FOCUSED CONTEXT TRANSFER', '7de9103e486d78490adf021168c5d48b1a1651ffe9daebb4902a5ab70fdd8a00', ['Target']]
     ];
 
@@ -178,15 +178,9 @@ test('study and focused-transfer substitutions preserve literal syntax and compl
     const defaults = JSON.parse(fs.readFileSync(path.join(root, 'shared/default-prompts.json'), 'utf8'));
     const study = defaults.find(item => item.id === 'latex-exam-study-guide');
     const transfer = defaults.find(item => item.id === 'focused-context-transfer');
-    const values = {
-        Course: 'Circuits', Assessment: 'Quiz 2', Scope: 'RC circuits',
-        'Course Materials / Context': 'Use \\frac{V}{R} and \\begin{document}.',
-        'Additional Requirements': 'Include diagrams'
-    };
-    let expected = study.text;
-    for (const [name, value] of Object.entries(values)) expected = expected.split('{{' + name + '}}').join(value);
-    const completed = PromptTemplate.substituteVariables(study.text, values);
-    assert.equal(completed.text, expected);
+    assert.deepEqual(Array.from(PromptTemplate.extractVariables(study.text)), []);
+    const completed = PromptTemplate.substituteVariables(study.text, {});
+    assert.equal(completed.text, study.text);
     assert.equal(completed.unfilled.length, 0);
     assert.ok(completed.text.includes('\\end{document}'));
     assert.deepEqual(Array.from(PromptTemplate.extractVariables(completed.text)), []);
