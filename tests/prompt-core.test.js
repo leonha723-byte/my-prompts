@@ -129,8 +129,8 @@ test('default prompt JSON is valid, normalized, and has unique IDs', () => {
     const defaults = JSON.parse(fs.readFileSync(path.join(root, 'shared/default-prompts.json'), 'utf8'));
     const result = PromptSchema.normalizePromptCollection(defaults);
 
-    assert.equal(defaults.length, 16);
-    assert.equal(result.prompts.length, 16);
+    assert.equal(defaults.length, 17);
+    assert.equal(result.prompts.length, 17);
     assert.equal(result.issues.length, 0);
     assert.equal(new Set(defaults.map(item => item.id)).size, defaults.length);
 });
@@ -151,9 +151,10 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
         ['notebooklm-target-study-context', 'NOTEBOOKLM — TARGET STUDY CONTEXT', '70652f94e8b7d9caa0f991b8dea190564fc6e7c9e007463d4e240f6662f9ca4b', ['Target']],
         ['gemini-task-handoff', 'GEMINI — TASK HANDOFF', '73ccdcf155da1f37ff9ed684f1dec8f75ad4766faf4aa74d09a546ba3b7b5e82', []],
         ['chatgpt-review-gemini-output', 'CHATGPT — REVIEW GEMINI OUTPUT', 'f5ffe6dc61c9cf292e0c9d25e92a779a2c7480db0a13979c4c3855614b317bbe', ['Gemini Output']],
-        ['deep-review-refine', 'DEEP REVIEW & REFINE', 'dc78ddfb7055730b07ca34fa2fb91bc9f8b226c9722df4287f340794d40f7adf', []],
+        ['deep-review-refine', 'DEEP REVIEW & REFINE — PREVIOUS ANSWER', '6b7d61b340417cc9d707405afed1a1e907c188324ceb2072ff2deb4ee1f0ae9b', []],
         ['latex-exam-study-guide', 'EXAM STUDY GUIDE — LATEX PDF', 'c7277c161e7422cbf8e1caefd9159ce954adf934ac26f1b22f74631425f4a286', []],
-        ['focused-context-transfer', 'FOCUSED CONTEXT TRANSFER', '7de9103e486d78490adf021168c5d48b1a1651ffe9daebb4902a5ab70fdd8a00', ['Target']]
+        ['focused-context-transfer', 'FOCUSED CONTEXT TRANSFER', '7de9103e486d78490adf021168c5d48b1a1651ffe9daebb4902a5ab70fdd8a00', ['Target']],
+        ['deep-review-request', 'DEEP REVIEW & REFINE — WITH REQUEST', '61c791e90a9d6c73a60a4387a725a23c5b44ad34fe82cda1f221d564b14de4ab', []]
     ];
 
     assert.deepEqual(defaults.map(item => [item.id, item.title]), expected.map(item => item.slice(0, 2)));
@@ -170,6 +171,7 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
     assert.equal(defaults.filter(item => item.id === 'deep-review-refine').length, 1);
     assert.equal(defaults[13].category, defaults[8].category);
     assert.deepEqual(Array.from(PromptTemplate.extractVariables(defaults[13].text)), []);
+    assert.equal(defaults[16].category, defaults[13].category);
     assert.equal(defaults[14].category, 'Study');
     assert.equal(defaults[15].category, defaults[0].category);
 });
