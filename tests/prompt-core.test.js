@@ -129,8 +129,8 @@ test('default prompt JSON is valid, normalized, and has unique IDs', () => {
     const defaults = JSON.parse(fs.readFileSync(path.join(root, 'shared/default-prompts.json'), 'utf8'));
     const result = PromptSchema.normalizePromptCollection(defaults);
 
-    assert.equal(defaults.length, 17);
-    assert.equal(result.prompts.length, 17);
+    assert.equal(defaults.length, 18);
+    assert.equal(result.prompts.length, 18);
     assert.equal(result.issues.length, 0);
     assert.equal(new Set(defaults.map(item => item.id)).size, defaults.length);
 });
@@ -154,7 +154,8 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
         ['deep-review-refine', 'DEEP REVIEW & REFINE — PREVIOUS ANSWER', '6b7d61b340417cc9d707405afed1a1e907c188324ceb2072ff2deb4ee1f0ae9b', []],
         ['latex-exam-study-guide', 'EXAM STUDY GUIDE — LATEX PDF', 'c7277c161e7422cbf8e1caefd9159ce954adf934ac26f1b22f74631425f4a286', []],
         ['focused-context-transfer', 'FOCUSED CONTEXT TRANSFER', '7de9103e486d78490adf021168c5d48b1a1651ffe9daebb4902a5ab70fdd8a00', ['Target']],
-        ['deep-review-request', 'DEEP REVIEW & REFINE — WITH REQUEST', '61c791e90a9d6c73a60a4387a725a23c5b44ad34fe82cda1f221d564b14de4ab', []]
+        ['deep-review-request', 'DEEP REVIEW & REFINE — WITH REQUEST', '61c791e90a9d6c73a60a4387a725a23c5b44ad34fe82cda1f221d564b14de4ab', []],
+        ['problem-solving-tutor', 'PROBLEM-SOLVING TUTOR', '8aaa4fb1775462bacb2901c2e95fd45f4787a9895cd45dd56f3798ed4aad70ca', []]
     ];
 
     assert.deepEqual(defaults.map(item => [item.id, item.title]), expected.map(item => item.slice(0, 2)));
@@ -172,6 +173,7 @@ test('canonical prompt content, stable IDs, and intended variables are preserved
     assert.equal(defaults[13].category, defaults[8].category);
     assert.deepEqual(Array.from(PromptTemplate.extractVariables(defaults[13].text)), []);
     assert.equal(defaults[16].category, defaults[13].category);
+    assert.equal(defaults[17].category, 'Study');
     assert.equal(defaults[14].category, 'Study');
     assert.equal(defaults[15].category, defaults[0].category);
 });
